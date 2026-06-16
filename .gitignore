@@ -28,3 +28,6 @@
 
 .DS_Store
 Thumbs.db
+
+# Private course materials that may contain license keys or commercial package links.
+PrivateCourseMaterials/
