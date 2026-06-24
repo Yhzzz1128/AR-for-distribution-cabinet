@@ -7,11 +7,18 @@ public class ClickableButton3D : MonoBehaviour
     [Header("Corresponding Text Panel (TextToggleController)")]
     public TextToggleController targetText;
 
+    [Header("QA Content (for QAPanelController)")]
+    public string buttonName;
+    [TextArea(3, 10)]
+    public string standardOperation;
+    [TextArea(3, 10)]
+    public string faultHandling;
+
     [Header("Button Visual Settings")]
-    public Color highlightColor = new Color(0.1f, 0.85f, 0.2f, 0.95f);
-    public Color defaultColor = new Color(0.7f, 0.7f, 0.7f, 0.7f);
-    public float pulseSpeed = 2f;
-    public float pulseMin = 0.5f;
+    public Color highlightColor = new Color(0.18f, 0.55f, 0.92f, 0.92f);
+    public Color defaultColor = new Color(0.45f, 0.48f, 0.55f, 0.55f);
+    public float pulseSpeed = 1.4f;
+    public float pulseMin = 0.72f;
     public float pulseMax = 1f;
 
     private Renderer[] childRenderers;
@@ -28,6 +35,15 @@ public class ClickableButton3D : MonoBehaviour
     void Start()
     {
         SetAllColors(highlightColor);
+    }
+
+    // Called by ARInteractor when this button is tapped
+    public void OnTapped()
+    {
+        if (!string.IsNullOrWhiteSpace(buttonName))
+        {
+            QAPanelController.Instance?.ShowQA(buttonName, standardOperation, faultHandling);
+        }
     }
 
     void Update()

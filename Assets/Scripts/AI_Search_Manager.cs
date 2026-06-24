@@ -158,6 +158,21 @@ public class AI_Search_Manager : MonoBehaviour
         inputField.resetOnDeActivation = false;
 
         PositionInputFieldForScreen();
+        // Tech-style input field background
+        Image inputBg = inputField.GetComponent<Image>();
+        if (inputBg != null)
+        {
+            inputBg.color = new Color(0.06f, 0.09f, 0.18f, 0.92f);
+        }
+        Outline inputOutline = inputField.GetComponent<Outline>();
+        if (inputOutline == null)
+        {
+            inputOutline = inputField.gameObject.AddComponent<Outline>();
+        }
+        inputOutline.effectColor = new Color(0.18f, 0.55f, 0.92f, 0.3f);
+        inputOutline.effectDistance = new Vector2(1f, -1f);
+        inputOutline.useGraphicAlpha = false;
+
         EnsureRuntimeInputText();
 
         float uiScale = GetAiUiScale();
@@ -165,7 +180,7 @@ public class AI_Search_Manager : MonoBehaviour
         {
             inputField.textComponent.enabled = true;
             inputField.textComponent.gameObject.SetActive(true);
-            inputField.textComponent.color = new Color(0.12f, 0.12f, 0.12f, 1f);
+            inputField.textComponent.color = new Color(0.94f, 0.95f, 0.98f, 1f);
             inputField.textComponent.fontSize = 16f * uiScale;
             inputField.textComponent.enableWordWrapping = false;
 
@@ -184,7 +199,7 @@ public class AI_Search_Manager : MonoBehaviour
         if (inputField.placeholder is TMP_Text placeholder)
         {
             placeholder.enabled = true;
-            placeholder.color = new Color(0.2f, 0.2f, 0.2f, 0.55f);
+            placeholder.color = new Color(0.50f, 0.55f, 0.68f, 0.55f);
             placeholder.fontSize = 16f * uiScale;
 
             if (chineseFont != null)
@@ -226,7 +241,7 @@ public class AI_Search_Manager : MonoBehaviour
 
         runtimeInputText.enabled = true;
         runtimeInputText.raycastTarget = false;
-        runtimeInputText.color = new Color(0.03f, 0.03f, 0.03f, 1f);
+        runtimeInputText.color = new Color(0.94f, 0.95f, 0.98f, 1f);
         runtimeInputText.fontSize = 16f * uiScale;
         runtimeInputText.alignment = TextAlignmentOptions.MidlineLeft;
         runtimeInputText.enableWordWrapping = false;
@@ -451,7 +466,7 @@ public class AI_Search_Manager : MonoBehaviour
         rect.anchoredPosition = GetResultPanelPosition();
 
         Image image = panel.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.78f);
+        image.color = new Color(0.04f, 0.06f, 0.12f, 0.94f);
         image.raycastTarget = true;
 
         contentPanel = panel.transform;
@@ -486,7 +501,7 @@ public class AI_Search_Manager : MonoBehaviour
         Image image = contentPanel.GetComponent<Image>();
         if (image != null)
         {
-            image.color = new Color(1f, 1f, 1f, 0.86f);
+            image.color = new Color(0.04f, 0.06f, 0.12f, 0.94f);
             image.raycastTarget = true;
         }
     }
@@ -644,8 +659,8 @@ public class AI_Search_Manager : MonoBehaviour
 
         CancelPendingAsk();
         ClearResults();
-        CreateResultItem("你：" + cleanQuestion, new Color(0.02f, 0.25f, 0.48f), true);
-        CreateResultItem("AI 正在思考...", new Color(0.08f, 0.08f, 0.08f), false);
+        CreateResultItem("你：" + cleanQuestion, new Color(0.35f, 0.70f, 1f), true);
+        CreateResultItem("AI 正在思考...", new Color(0.85f, 0.88f, 0.93f), false);
 
         if (useOnlineAI && HasUsableApiKey())
         {
@@ -906,7 +921,7 @@ public class AI_Search_Manager : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(answer))
         {
-            CreateResultItem("无返回内容，请重试。", new Color(0.06f, 0.06f, 0.06f), false);
+            CreateResultItem("无返回内容，请重试。", new Color(0.90f, 0.92f, 0.96f), false);
             return;
         }
 
@@ -914,7 +929,7 @@ public class AI_Search_Manager : MonoBehaviour
 
         if (lines.Length == 0)
         {
-            CreateResultItem(answer, new Color(0.06f, 0.06f, 0.06f), false);
+            CreateResultItem(answer, new Color(0.90f, 0.92f, 0.96f), false);
             return;
         }
 
@@ -933,7 +948,7 @@ public class AI_Search_Manager : MonoBehaviour
             }
 
             bool isHeader = i == 0;
-            CreateResultItem(trimmed, isHeader ? new Color(0.02f, 0.25f, 0.48f) : new Color(0.06f, 0.06f, 0.06f), isHeader);
+            CreateResultItem(trimmed, isHeader ? new Color(0.35f, 0.70f, 1f) : new Color(0.90f, 0.92f, 0.96f), isHeader);
         }
     }
 
@@ -1048,7 +1063,7 @@ public class AI_Search_Manager : MonoBehaviour
     private void ShowHint()
     {
         ClearResults();
-        CreateResultItem(emptyHint, new Color(0.08f, 0.08f, 0.08f), false);
+        CreateResultItem(emptyHint, new Color(0.85f, 0.88f, 0.93f), false);
     }
 
     private void ClearResults()

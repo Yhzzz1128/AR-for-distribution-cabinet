@@ -10,11 +10,13 @@ public class ARInteractor : MonoBehaviour
 
     [Header("Hit Detection Tuning")]
     [Tooltip("SphereCast radius - larger = easier to tap, smaller = more precise")]
-    public float hitRadius = 0.03f;
+    public float hitRadius = 0.015f;
     [Tooltip("Number of ray samples around the touch point")]
     public int raySamples = 1;
     [Tooltip("Spread radius for multi-sampling in screen pixels")]
-    public float sampleSpread = 6f;
+    public float sampleSpread = 2f;
+    [Tooltip("Screen-space offset to compensate AR camera misalignment (positive Y = move hit point up)")]
+    public Vector2 tapOffset = new Vector2(0f, 0f);
 
     void Update()
     {
@@ -24,16 +26,19 @@ public class ARInteractor : MonoBehaviour
 
         int mask = interactableMask.value == 0 ? Physics.DefaultRaycastLayers : interactableMask.value;
 
-        RaycastHit? bestHit = TryMultiSampleHit(pos, mask);
+        RaycastHit? bestHit = TryMultiSampleHit(pos + tapOffset, mask);
 
         if (bestHit.HasValue)
         {
             RaycastHit hit = bestHit.Value;
 
             var btn = hit.collider.GetComponentInParent<ClickableButton3D>();
-            if (btn != null && btn.targetText != null)
+            if (btn != null)
             {
-                btn.targetText.Toggle();
+                if (btn.targetText != null)
+                {
+                    btn.targetText.Toggle();
+                }
             }
 
             var toggle = hit.collider.GetComponentInParent<ToggleAnimOnTap>();
@@ -63,7 +68,7 @@ public class ARInteractor : MonoBehaviour
             Vector2 samplePos = screenPos + offset;
             Ray ray = arCamera.ScreenPointToRay(samplePos);
 
-            if (Physics.SphereCast(ray, hitRadius, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Collide))
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Collide))
             {
                 if (hit.distance < closest)
                 {

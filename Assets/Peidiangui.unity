@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -153,6 +153,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1283827782}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "关断运行指示灯"
+  standardOperation: "断路器分闸后常亮，指示主回路处于分闸断开状态。"
+  faultHandling: "分闸后不亮：检查分闸辅助触点、指示灯回路接线是否松动。"
 --- !u!65 &3771830
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -220,6 +228,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 2088462761}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "就地 / 停 / 远程旋钮"
+  standardOperation: "三档切换，左档就地控制、中间停止、右档远程控制，日常根据操作需求切换。"
+  faultHandling: "档位失效：检查旋钮触点接触是否良好、对应档位接线是否松动。"
 --- !u!65 &56272706
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -762,7 +778,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 24, y: -118}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 10}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &102241139
 MonoBehaviour:
@@ -2841,6 +2857,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 902488652}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "关到位指示灯"
+  standardOperation: "隔离开关完全分闸到位后常亮，用于指示开关分断位置。"
+  faultHandling: "分闸到位后不亮：检查关到位行程开关触点、信号回路接线。"
 --- !u!65 &418625154
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3059,6 +3083,7 @@ GameObject:
   - component: {fileID: 456623238}
   - component: {fileID: 456623237}
   - component: {fileID: 456623236}
+  - component: {fileID: 3000000004}
   m_Layer: 0
   m_Name: Image Target2
   m_TagString: Untagged
@@ -3107,6 +3132,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hasOverrideStrategy: 0
   overrideStrategy: 0
+
+--- !u!114 &3000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456623235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f3b1645f4fdd4f96aa4b1771da488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &456623238
 Transform:
   m_ObjectHideFlags: 0
@@ -3164,6 +3202,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1659958544}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "就地停止按钮"
+  standardOperation: "紧急情况下按下，可立即切断输出，停止设备运行。"
+  faultHandling: "按下无法停机：检查停止按钮常闭触点是否粘连、控制回路是否短接。"
 --- !u!65 &462341988
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3336,7 +3382,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CameraOpenMethod: 1
   CameraOpenType: 1
-  CameraOpenIndex: 1
+  CameraOpenIndex: 0
   hasDesiredAndroidCameraApiType: 0
   desiredAndroidCameraApiType: 0
   hasDesiredFocusMode: 0
@@ -3406,6 +3452,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1884028073}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "就地关闸按钮"
+  standardOperation: "就地模式下按下，执行分闸操作，断开主回路供电。"
+  faultHandling: "按下无反应：检查控制回路保险、分闸线圈接线、联锁回路是否导通。"
 --- !u!65 &554733605
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3516,6 +3570,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 100618641}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "就地开闸按钮"
+  standardOperation: "切换至就地模式后，按下此按钮可就地合闸，需按住确认动作完成。"
+  faultHandling: "按下无反应：检查控制回路电源、就地"
 --- !u!65 &647431662
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3568,6 +3630,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1486805571}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "开通运行指示灯"
+  standardOperation: "断路器合闸后常亮，指示主回路处于合闸运行状态。"
+  faultHandling: "合闸后不亮：检查断路器辅助触点接线、指示灯回路保险丝是否完好。"
 --- !u!65 &694368496
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4425,6 +4495,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 183842759}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "电源指示灯"
+  standardOperation: "设备通电后常亮，指示配电柜主回路供电正常，日常无需额外操作。"
+  faultHandling: "1. 灯不亮：检查上级电源开关是否合闸、主回路保险丝是否熔断
+2."
 --- !u!65 &876795678
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4924,6 +5003,7 @@ GameObject:
   - component: {fileID: 973830628}
   - component: {fileID: 973830627}
   - component: {fileID: 973830629}
+  - component: {fileID: 3000000003}
   m_Layer: 0
   m_Name: Image Target1
   m_TagString: Untagged
@@ -5011,6 +5091,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hasOverrideStrategy: 0
   overrideStrategy: 0
+
+--- !u!114 &3000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 973830626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f3b1645f4fdd4f96aa4b1771da488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &985041560
 GameObject:
   m_ObjectHideFlags: 0
@@ -5213,6 +5306,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 330652684}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: "开到位指示灯"
+  standardOperation: "隔离开关完全合闸到位后常亮，用于指示开关位置状态。"
+  faultHandling: "合闸到位后不亮：检查开到位行程开关是否触发、接线是否脱落。"
 --- !u!65 &986251180
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5405,6 +5506,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1930383585}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1023232245
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5653,6 +5762,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1328621401}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1104819382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5720,6 +5837,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 2042040575}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1237794893
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6838,7 +6963,7 @@ MonoBehaviour:
   imageTargetController: {fileID: 973830627}
   hintUI: {fileID: 1489173800}
   useTransparentHintBorder: 1
-  hintBorderColor: {r: 0.02, g: 0.85, b: 0.08, a: 0.85}
+  hintBorderColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.85}
   hintBorderThickness: 6
   hintBorderSize: {x: 280, y: 300}
 --- !u!114 &1385188287
@@ -6856,7 +6981,7 @@ MonoBehaviour:
   imageTargetController: {fileID: 456623236}
   hintUI: {fileID: 1489173800}
   useTransparentHintBorder: 1
-  hintBorderColor: {r: 0.02, g: 0.85, b: 0.08, a: 0.85}
+  hintBorderColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.85}
   hintBorderThickness: 6
   hintBorderSize: {x: 280, y: 300}
 --- !u!4 &1385188288
@@ -7638,6 +7763,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 994920678}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1500271681
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7748,6 +7881,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 857220573}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1503556631
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7983,6 +8124,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1259254011}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1630070685
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8050,6 +8199,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1304836725}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1648843179
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8409,6 +8566,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 357591360}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1694010463
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8717,6 +8882,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1094868417}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1857274051
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8787,6 +8960,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   maxDistance: 20
+  hitRadius: 0.03
+  raySamples: 1
+  sampleSpread: 6
 --- !u!4 &1879840904
 Transform:
   m_ObjectHideFlags: 0
@@ -8989,6 +9165,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 310014149}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1886284891
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9373,6 +9557,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 1628652393}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &1964619449
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9988,6 +10180,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetText: {fileID: 142018054}
+  highlightColor: {r: 0.18, g: 0.55, b: 0.92, a: 0.92}
+  defaultColor: {r: 0.45, g: 0.48, b: 0.55, a: 0.55}
+  pulseSpeed: 1.4
+  pulseMin: 0.72
+  pulseMax: 1
+  buttonName: ""
+  standardOperation: ""
+  faultHandling: ""
 --- !u!65 &2058603568
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10538,6 +10738,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2105010300}
   m_CullTransparentMesh: 1
+
+--- !u!1 &3000000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3000000001}
+  - component: {fileID: 3000000002}
+  m_Layer: 0
+  m_Name: QAPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3000000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97d10e5aae198d24d81cf46f3c0c81ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panelObj: {fileID: 0}
+  titleText: {fileID: 0}
+  operateText: {fileID: 0}
+  faultText: {fileID: 0}
+  panelWidth: 420
+  panelHeight: 360
+  panelPosition: {x: 24, y: -140}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -10553,3 +10805,4 @@ SceneRoots:
   - {fileID: 1385188288}
   - {fileID: 1886008953}
   - {fileID: 1058299242}
+      - {fileID: 3000000001}
