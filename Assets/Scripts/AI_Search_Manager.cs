@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -10,10 +10,11 @@ using UnityEngine.UI;
 
 public class AI_Search_Manager : MonoBehaviour
 {
-    [Header("AI 配置")]
+    [Header("AI 在线问答配置")]
     public string apiKey = "sk-your-deepseek-api-key";
     public string apiUrl = "https://api.deepseek.com/chat/completions";
     public string model = "deepseek-v4-flash";
+    [Tooltip("启用在线 AI 问答（需要有效的 API Key）。\n注意：API Key 会打包到 APK 中，有泄露风险。\n建议在生产环境下通过后端代理转发。")]
     public bool useOnlineAI = false;
     public float requestTimeoutSeconds = 20f;
 
@@ -758,12 +759,12 @@ public class AI_Search_Manager : MonoBehaviour
 
         if (best == null)
         {
-            CreateAnswerItems("本地知识库中没有找到足够匹配的流程。请换成更具体的问题，例如“停电操作流程”“熔断器故障处理”或“指示灯不亮怎么排查”。");
+            CreateAnswerItems("本地知识库中没有找到足够匹配的流程。请换成更具体的问题，例如\u2018停电操作流程\u2019\u2018熔断器故障处理\u2019或\u2018指示灯不亮怎么排查\u2019。");
             return;
         }
 
         StringBuilder builder = new StringBuilder();
-        builder.Append(best.title);
+        builder.Append(best.title ?? "未知标题");
 
         if (!string.IsNullOrWhiteSpace(best.command))
         {
@@ -775,10 +776,10 @@ public class AI_Search_Manager : MonoBehaviour
             builder.Append("\n处理步骤：");
             for (int i = 0; i < best.steps.Length; i++)
             {
-                builder.Append("\n").Append(i + 1).Append(". ").Append(best.steps[i]);
+                string stepText = best.steps[i];
+                builder.Append("\n").Append(i + 1).Append(". ").Append(stepText ?? "(无内容)");
             }
         }
-
         builder.Append("\n安全提示：检修前请先断电、验电、挂牌，必要时联系有资质电工处理。");
         CreateAnswerItems(builder.ToString());
     }
@@ -796,6 +797,7 @@ public class AI_Search_Manager : MonoBehaviour
 
         foreach (OperationEntry entry in knowledgeEntries)
         {
+            if (entry == null) { continue; }
             int score = ScoreEntry(normalizedQuery, entry);
             if (score > bestScore)
             {
@@ -804,7 +806,7 @@ public class AI_Search_Manager : MonoBehaviour
             }
         }
 
-        return bestScore >= 2 ? best : null;
+        return bestScore >= 1 ? best : null;
     }
 
     private int ScoreEntry(string query, OperationEntry entry)
@@ -812,12 +814,12 @@ public class AI_Search_Manager : MonoBehaviour
         int score = 0;
         string searchable = NormalizeText(entry.command + " " + entry.title + " " + string.Join(" ", entry.keywords ?? Array.Empty<string>()) + " " + string.Join(" ", entry.steps ?? Array.Empty<string>()));
 
-        if (!string.IsNullOrWhiteSpace(entry.command) && query.Contains(NormalizeText(entry.command)))
+        if (!string.IsNullOrWhiteSpace(entry.command) && (query.Contains(NormalizeText(entry.command)) || NormalizeText(entry.command).Contains(query)))
         {
             score += 6;
         }
 
-        if (!string.IsNullOrWhiteSpace(entry.title) && query.Contains(NormalizeText(entry.title)))
+        if (!string.IsNullOrWhiteSpace(entry.title) && (query.Contains(NormalizeText(entry.title)) || NormalizeText(entry.title).Contains(query)))
         {
             score += 4;
         }
@@ -902,17 +904,36 @@ public class AI_Search_Manager : MonoBehaviour
 
     private void CreateAnswerItems(string answer)
     {
+        if (string.IsNullOrWhiteSpace(answer))
+        {
+            CreateResultItem("无返回内容，请重试。", new Color(0.06f, 0.06f, 0.06f), false);
+            return;
+        }
+
         string[] lines = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (lines.Length == 0)
+        {
+            CreateResultItem(answer, new Color(0.06f, 0.06f, 0.06f), false);
+            return;
+        }
+
         for (int i = 0; i < lines.Length; i++)
         {
-            string line = lines[i].Trim();
-            if (line.Length == 0)
+            string line = lines[i];
+            if (line == null)
+            {
+                continue;
+            }
+
+            string trimmed = line.Trim();
+            if (trimmed.Length == 0)
             {
                 continue;
             }
 
             bool isHeader = i == 0;
-            CreateResultItem(line, isHeader ? new Color(0.02f, 0.25f, 0.48f) : new Color(0.06f, 0.06f, 0.06f), isHeader);
+            CreateResultItem(trimmed, isHeader ? new Color(0.02f, 0.25f, 0.48f) : new Color(0.06f, 0.06f, 0.06f), isHeader);
         }
     }
 
@@ -990,14 +1011,21 @@ public class AI_Search_Manager : MonoBehaviour
         layoutElement.minHeight = preferredHeight;
         layoutElement.preferredHeight = preferredHeight;
 
-        if (resultContent != null)
+        try
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate(resultContent);
-        }
+            if (resultContent != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(resultContent);
+            }
 
-        if (contentPanel is RectTransform contentRect)
+            if (contentPanel is RectTransform contentRect)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+            }
+        }
+        catch (Exception ex)
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+            Debug.LogWarning("LayoutRebuilder 重建失败（可能因并发清理）: " + ex.Message);
         }
 
         if (resultScrollRect != null)
@@ -1031,16 +1059,41 @@ public class AI_Search_Manager : MonoBehaviour
         }
 
         Transform clearRoot = resultContent != null ? resultContent : contentPanel;
-        for (int i = clearRoot.childCount - 1; i >= 0; i--)
+
+        int childCount = clearRoot.childCount;
+        if (childCount == 0)
         {
-            Transform child = clearRoot.GetChild(i);
-            if (Application.isPlaying)
+            return;
+        }
+
+        Transform[] childrenToDestroy = new Transform[childCount];
+        for (int i = 0; i < childCount; i++)
+        {
+            childrenToDestroy[i] = clearRoot.GetChild(i);
+        }
+
+        for (int i = childrenToDestroy.Length - 1; i >= 0; i--)
+        {
+            Transform child = childrenToDestroy[i];
+            if (child == null)
             {
-                Destroy(child.gameObject);
+                continue;
             }
-            else
+
+            try
             {
-                DestroyImmediate(child.gameObject);
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("清除结果项时出错: " + ex.Message);
             }
         }
     }
@@ -1109,3 +1162,4 @@ public class AI_Search_Manager : MonoBehaviour
         public string content;
     }
 }
+

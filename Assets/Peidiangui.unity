@@ -3334,9 +3334,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dca8017ddc105e5488bf7ba9b4a177cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CameraOpenMethod: 0
+  CameraOpenMethod: 1
   CameraOpenType: 1
-  CameraOpenIndex: 0
+  CameraOpenIndex: 1
   hasDesiredAndroidCameraApiType: 0
   desiredAndroidCameraApiType: 0
   hasDesiredFocusMode: 0

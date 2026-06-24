@@ -1,8 +1,9 @@
-{
+﻿{
   "dependencies": {
     "com.easyar.sense": "file:D:/EasyARSenseUnityPlugin_4002.0.0+4956.1ec38c1ad/com.easyar.sense-4002.0.0+4956.1ec38c1ad.tgz",
     "com.unity.collab-proxy": "2.6.0",
     "com.unity.feature.development": "1.0.1",
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
     "com.unity.textmeshpro": "3.0.7",
     "com.unity.timeline": "1.7.6",
     "com.unity.ugui": "1.0.0",

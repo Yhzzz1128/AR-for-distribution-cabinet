@@ -1,14 +1,15 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
 
 public class TextToggleController : MonoBehaviour
 {
-    [Header("要显示/隐藏的对象（一般就是当前物体）")]
+    [Header("Show/Hide Target (usually this GameObject)")]
     public GameObject textRoot;
-    [Header("可选：想在打开时替换成的文字")]
+    [Header("Optional: Text to show when opened")]
     public TMP_Text tmpToFill;
     [TextArea] public string textWhenOpen;
 
@@ -24,6 +25,28 @@ public class TextToggleController : MonoBehaviour
         if (startHidden) textRoot.SetActive(false);
         if (tmpToFill == null) tmpToFill = GetComponentInChildren<TMP_Text>(true);
         CacheTexts();
+        SetupBackground();
+    }
+
+    void SetupBackground()
+    {
+        if (textRoot == null) return;
+
+        Image bg = textRoot.GetComponent<Image>();
+        if (bg == null)
+        {
+            bg = textRoot.AddComponent<Image>();
+        }
+        bg.color = new Color(0.08f, 0.08f, 0.12f, 0.88f);
+
+        RectTransform rect = textRoot.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            if (rect.sizeDelta.x < 10f && rect.sizeDelta.y < 10f)
+            {
+                rect.sizeDelta = new Vector2(600f, 200f);
+            }
+        }
     }
 
     public void Show()
