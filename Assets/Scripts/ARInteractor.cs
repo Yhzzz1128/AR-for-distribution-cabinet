@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public class ARInteractor : MonoBehaviour
@@ -8,15 +7,16 @@ public class ARInteractor : MonoBehaviour
     public LayerMask interactableMask;
     public float maxDistance = 20f;
 
-    [Header("Hit Detection Tuning")]
-    [Tooltip("SphereCast radius - larger = easier to tap, smaller = more precise")]
-    public float hitRadius = 0.015f;
-    [Tooltip("Number of ray samples around the touch point")]
-    public int raySamples = 1;
-    [Tooltip("Spread radius for multi-sampling in screen pixels")]
-    public float sampleSpread = 2f;
-    [Tooltip("Screen-space offset to compensate AR camera misalignment (positive Y = move hit point up)")]
-    public Vector2 tapOffset = new Vector2(0f, 0f);
+    [Header("Color Match Tolerance")]
+    [Tooltip("Max color difference (0-1) allowed for a match. Lower = stricter.")]
+    public float colorTolerance = 0.15f;
+
+    private ClickableButton3D[] allButtons;
+
+    void Start()
+    {
+        allButtons = FindObjectsOfType<ClickableButton3D>();
+    }
 
     void Update()
     {
@@ -25,60 +25,111 @@ public class ARInteractor : MonoBehaviour
         if (arCamera == null) return;
 
         int mask = interactableMask.value == 0 ? Physics.DefaultRaycastLayers : interactableMask.value;
+        Ray ray = arCamera.ScreenPointToRay(pos);
 
-        RaycastHit? bestHit = TryMultiSampleHit(pos + tapOffset, mask);
+        if (!Physics.Raycast(ray, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Collide))
+            return;
 
-        if (bestHit.HasValue)
+        // Refresh button registry if needed
+        if (allButtons == null || allButtons.Length == 0)
         {
-            RaycastHit hit = bestHit.Value;
+            allButtons = FindObjectsOfType<ClickableButton3D>();
+        }
 
-            var btn = hit.collider.GetComponentInParent<ClickableButton3D>();
-            if (btn != null)
-            {
-                if (btn.targetText != null)
-                {
-                    btn.targetText.Toggle();
-                }
-            }
+        // Try to match by object reference first (exact hit on a button collider)
+        var btn = hit.collider.GetComponentInParent<ClickableButton3D>();
+        if (btn != null)
+        {
+            if (btn.targetText != null)
+                btn.targetText.Toggle();
+            return;
+        }
 
-            var toggle = hit.collider.GetComponentInParent<ToggleAnimOnTap>();
-            if (toggle != null)
+        // Fallback: match by material color at the hit point
+        Renderer hitRenderer = hit.collider.GetComponentInParent<Renderer>();
+        if (hitRenderer != null)
+        {
+            Color hitColor = GetHitColor(hitRenderer, hit);
+            ClickableButton3D matched = MatchByColor(hitColor);
+            if (matched != null && matched.targetText != null)
             {
-                toggle.Toggle();
+                matched.targetText.Toggle();
                 return;
             }
         }
+
+        // Toggle animation support
+        var toggle = hit.collider.GetComponentInParent<ToggleAnimOnTap>();
+        if (toggle != null)
+        {
+            toggle.Toggle();
+        }
     }
 
-    RaycastHit? TryMultiSampleHit(Vector2 screenPos, int mask)
+    Color GetHitColor(Renderer r, RaycastHit hit)
     {
-        float halfSample = sampleSpread * 0.5f;
-        float closest = float.MaxValue;
-        RaycastHit? bestHit = null;
-
-        for (int i = 0; i < raySamples; i++)
+        // Try to read the actual pixel color from the texture at the hit UV
+        Material mat = r.sharedMaterial;
+        if (mat != null && mat.HasProperty("_MainTex") && mat.mainTexture is Texture2D tex)
         {
-            Vector2 offset = Vector2.zero;
-            if (i > 0)
+            if (hit.textureCoord != Vector2.zero || hit.textureCoord2 != Vector2.zero)
             {
-                float angle = (i - 1) * (Mathf.PI * 2f) / (raySamples - 1);
-                offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * halfSample;
-            }
-
-            Vector2 samplePos = screenPos + offset;
-            Ray ray = arCamera.ScreenPointToRay(samplePos);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Collide))
-            {
-                if (hit.distance < closest)
-                {
-                    closest = hit.distance;
-                    bestHit = hit;
-                }
+                Vector2 uv = hit.textureCoord;
+                int x = Mathf.FloorToInt(uv.x * tex.width);
+                int y = Mathf.FloorToInt(uv.y * tex.height);
+                x = Mathf.Clamp(x, 0, tex.width - 1);
+                y = Mathf.Clamp(y, 0, tex.height - 1);
+                return tex.GetPixel(x, y);
             }
         }
 
-        return bestHit;
+        // Fallback: use material''s _Color property
+        if (mat != null && mat.HasProperty("_Color"))
+        {
+            return mat.GetColor("_Color");
+        }
+
+        // Last resort: use property block
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        r.GetPropertyBlock(block);
+        return block.GetColor("_Color");
+    }
+
+    ClickableButton3D MatchByColor(Color hitColor)
+    {
+        if (allButtons == null) return null;
+
+        ClickableButton3D best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var b in allButtons)
+        {
+            if (b == null) continue;
+            float dist = ColorDistance(hitColor, b.highlightColor);
+            if (dist < bestDist && dist <= colorTolerance)
+            {
+                bestDist = dist;
+                best = b;
+            }
+        }
+
+        return best;
+    }
+
+    float ColorDistance(Color a, Color b)
+    {
+        // Weighted perceptual distance: hue matters more
+        float hueA, satA, valA, hueB, satB, valB;
+        Color.RGBToHSV(a, out hueA, out satA, out valA);
+        Color.RGBToHSV(b, out hueB, out satB, out valB);
+
+        float hueDist = Mathf.Abs(hueA - hueB);
+        if (hueDist > 0.5f) hueDist = 1f - hueDist;
+
+        float satDist = Mathf.Abs(satA - satB);
+        float valDist = Mathf.Abs(valA - valB);
+
+        return hueDist * 2f + satDist * 1f + valDist * 0.5f;
     }
 
     bool TryGetPointerDown(out Vector2 pos)
