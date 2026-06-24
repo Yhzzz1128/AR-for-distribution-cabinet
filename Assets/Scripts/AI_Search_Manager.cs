@@ -37,9 +37,16 @@ public class AI_Search_Manager : MonoBehaviour
     private UnityWebRequest activeRequest;
     private string lastSubmittedQuestion = "";
     private float lastSubmittedTime;
-    private TMP_Text runtimeInputText;
     private RectTransform resultContent;
     private ScrollRect resultScrollRect;
+
+    // Step-by-step state
+    private List<string> pendingAnswerLines = new List<string>();
+    private int currentStepIndex = 0;
+    private GameObject nextStepButton;
+    private GameObject prevStepButton;
+    private GameObject currentStepObj;
+    private List<GameObject> persistentSafetyItems = new List<GameObject>();
 
     private void Start()
     {
@@ -57,8 +64,6 @@ public class AI_Search_Manager : MonoBehaviour
         {
             return;
         }
-
-        SyncRuntimeInputText();
         HandleResultMouseWheel();
 
         if (!Input.GetKeyDown(KeyCode.Return) && !Input.GetKeyDown(KeyCode.KeypadEnter))
@@ -154,7 +159,7 @@ public class AI_Search_Manager : MonoBehaviour
         inputField.interactable = true;
         inputField.readOnly = false;
         inputField.lineType = TMP_InputField.LineType.SingleLine;
-        inputField.shouldHideMobileInput = false;
+        inputField.shouldHideMobileInput = Application.isMobilePlatform;
         inputField.resetOnDeActivation = false;
 
         PositionInputFieldForScreen();
@@ -172,8 +177,6 @@ public class AI_Search_Manager : MonoBehaviour
         inputOutline.effectColor = new Color(0.18f, 0.55f, 0.92f, 0.3f);
         inputOutline.effectDistance = new Vector2(1f, -1f);
         inputOutline.useGraphicAlpha = false;
-
-        EnsureRuntimeInputText();
 
         float uiScale = GetAiUiScale();
         if (inputField.textComponent != null)
@@ -209,7 +212,6 @@ public class AI_Search_Manager : MonoBehaviour
         }
 
         inputField.text = inputField.text ?? "";
-        SyncRuntimeInputText();
         inputField.ForceLabelUpdate();
         Canvas.ForceUpdateCanvases();
         StartCoroutine(RebuildInputFieldNextFrame());
@@ -217,56 +219,20 @@ public class AI_Search_Manager : MonoBehaviour
 
     private void EnsureRuntimeInputText()
     {
+        // Use native text component instead of replacing it (replacement breaks caret)
+        if (inputField == null || inputField.textComponent == null) return;
         float uiScale = GetAiUiScale();
-        Transform parent = inputField.textViewport != null ? inputField.textViewport : inputField.transform;
-        Transform existing = parent.Find("Runtime Input Text");
-        GameObject textObject = existing != null ? existing.gameObject : new GameObject("Runtime Input Text", typeof(RectTransform));
-
-        textObject.transform.SetParent(parent, false);
-        textObject.SetActive(true);
-        textObject.transform.SetAsLastSibling();
-
-        runtimeInputText = textObject.GetComponent<TextMeshProUGUI>();
-        if (runtimeInputText == null)
-        {
-            runtimeInputText = textObject.AddComponent<TextMeshProUGUI>();
-        }
-
-        RectTransform rect = runtimeInputText.rectTransform;
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(6f * uiScale, 0);
-        rect.offsetMax = new Vector2(-6f * uiScale, 0);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-
-        runtimeInputText.enabled = true;
-        runtimeInputText.raycastTarget = false;
-        runtimeInputText.color = new Color(0.94f, 0.95f, 0.98f, 1f);
-        runtimeInputText.fontSize = 16f * uiScale;
-        runtimeInputText.alignment = TextAlignmentOptions.MidlineLeft;
-        runtimeInputText.enableWordWrapping = false;
-        runtimeInputText.overflowMode = TextOverflowModes.Ellipsis;
-
-        if (chineseFont != null)
-        {
-            runtimeInputText.font = chineseFont;
-        }
-
-        inputField.textComponent = runtimeInputText;
+        inputField.textComponent.enabled = true;
+        inputField.textComponent.raycastTarget = false;
+        inputField.textComponent.color = new Color(0.94f, 0.95f, 0.98f, 1f);
+        inputField.textComponent.fontSize = 16f * uiScale;
+        inputField.textComponent.alignment = TextAlignmentOptions.MidlineLeft;
+        inputField.textComponent.enableWordWrapping = false;
+        inputField.textComponent.overflowMode = TextOverflowModes.Overflow;
+        if (chineseFont != null) inputField.textComponent.font = chineseFont;
     }
 
-    private void SyncRuntimeInputText()
-    {
-        if (runtimeInputText == null || inputField == null)
-        {
-            return;
-        }
 
-        if (runtimeInputText.text != inputField.text)
-        {
-            runtimeInputText.text = inputField.text;
-        }
-    }
 
     private IEnumerator RebuildInputFieldNextFrame()
     {
@@ -281,8 +247,6 @@ public class AI_Search_Manager : MonoBehaviour
         {
             inputField.textComponent.ForceMeshUpdate(true, true);
         }
-
-        SyncRuntimeInputText();
         inputField.ForceLabelUpdate();
         Canvas.ForceUpdateCanvases();
     }
@@ -548,7 +512,7 @@ public class AI_Search_Manager : MonoBehaviour
         float uiScale = GetAiUiScale();
         return new Vector2(
             Mathf.Clamp(300f * uiScale, 300f, 560f),
-            Mathf.Clamp(360f * uiScale, 360f, 760f));
+            Mathf.Clamp(180f * uiScale, 180f, 400f));
     }
 
     private float GetAiUiScale()
@@ -616,7 +580,6 @@ public class AI_Search_Manager : MonoBehaviour
 
     private void OnInputChanged(string query)
     {
-        SyncRuntimeInputText();
 
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -658,6 +621,7 @@ public class AI_Search_Manager : MonoBehaviour
         lastSubmittedTime = Time.unscaledTime;
 
         CancelPendingAsk();
+        ClearStepState();
         ClearResults();
         CreateResultItem("你：" + cleanQuestion, new Color(0.35f, 0.70f, 1f), true);
         CreateResultItem("AI 正在思考...", new Color(0.85f, 0.88f, 0.93f), false);
@@ -751,8 +715,7 @@ public class AI_Search_Manager : MonoBehaviour
                 return;
             }
 
-            ClearResults();
-            CreateAnswerItems(CleanAnswerForDisplay(answer));
+            ClearResults(); ClearStepState(); StartStepByStep(CleanAnswerForDisplay(answer));
         }
         catch (Exception e)
         {
@@ -765,38 +728,50 @@ public class AI_Search_Manager : MonoBehaviour
     {
         OperationEntry best = FindBestLocalMatch(userQuestion);
 
-        ClearResults();
-
         if (!string.IsNullOrWhiteSpace(note))
         {
             Debug.Log(note);
         }
 
+        // Remove only "AI thinking" text, keep the question
+        ClearTemporaryItems();
+
         if (best == null)
         {
-            CreateAnswerItems("本地知识库中没有找到足够匹配的流程。请换成更具体的问题，例如\u2018停电操作流程\u2019\u2018熔断器故障处理\u2019或\u2018指示灯不亮怎么排查\u2019。");
+            CreateResultItem("本地知识库中没有找到足够匹配的流程。请换成更具体的问题。", new Color(0.90f, 0.92f, 0.96f), false);
             return;
         }
 
-        StringBuilder builder = new StringBuilder();
-        builder.Append(best.title ?? "未知标题");
+        // Build step list directly from data
+        List<string> steps = new List<string>();
+        steps.Add(best.title ?? "未知标题");
 
         if (!string.IsNullOrWhiteSpace(best.command))
         {
-            builder.Append("\n匹配指令：").Append(best.command);
+            steps.Add("匹配指令：" + best.command);
         }
 
         if (best.steps != null && best.steps.Length > 0)
         {
-            builder.Append("\n处理步骤：");
+            steps.Add("\u25a0 处理步骤：");
             for (int i = 0; i < best.steps.Length; i++)
             {
-                string stepText = best.steps[i];
-                builder.Append("\n").Append(i + 1).Append(". ").Append(stepText ?? "(无内容)");
+                steps.Add((i + 1) + ". " + (best.steps[i] ?? "(无内容)"));
             }
         }
-        builder.Append("\n安全提示：检修前请先断电、验电、挂牌，必要时联系有资质电工处理。");
-        CreateAnswerItems(builder.ToString());
+
+        // Safety note as persistent
+        string safetyNote = "\u26a0 安全提示：检修前请先断电、验电、挂牌，必要时联系有资质电工处理。";
+
+        ClearStepState();
+        pendingAnswerLines = steps;
+        currentStepIndex = 0;
+
+        // Show safety right away (persistent)
+        GameObject safetyItem = CreateResultItemReturnObj(safetyNote, new Color(1f, 0.82f, 0.3f, 1f), false);
+        if (safetyItem != null) persistentSafetyItems.Add(safetyItem);
+
+        ShowNextStep();
     }
 
     private OperationEntry FindBestLocalMatch(string query)
@@ -1062,8 +1037,32 @@ public class AI_Search_Manager : MonoBehaviour
 
     private void ShowHint()
     {
+        ClearStepState();
         ClearResults();
         CreateResultItem(emptyHint, new Color(0.85f, 0.88f, 0.93f), false);
+    }
+
+        private void ClearTemporaryItems()
+    {
+        if (contentPanel == null) return;
+        Transform clearRoot = resultContent != null ? resultContent : contentPanel;
+        // Only destroy the "AI thinking" text (last child) and next button
+        for (int i = clearRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = clearRoot.GetChild(i);
+            if (child == null) continue;
+            if (child.name.StartsWith("_StepBtnBar") || (child.name == "AIAnswerText" && child.childCount == 0))
+            {
+                try { if (Application.isPlaying) Destroy(child.gameObject); else DestroyImmediate(child.gameObject); }
+                catch { }
+            }
+            else if (i == clearRoot.childCount - 1)
+            {
+                try { if (Application.isPlaying) Destroy(child.gameObject); else DestroyImmediate(child.gameObject); }
+                catch { }
+                break; // only remove the last item (AI thinking text)
+            }
+        }
     }
 
     private void ClearResults()
@@ -1111,6 +1110,222 @@ public class AI_Search_Manager : MonoBehaviour
                 Debug.LogWarning("清除结果项时出错: " + ex.Message);
             }
         }
+    }
+
+    
+    // ===== Step-by-step display =====
+
+    private void ClearStepState()
+    {
+        pendingAnswerLines.Clear();
+        currentStepIndex = 0;
+        DestroyButtonBar();
+        if (currentStepObj != null) { Destroy(currentStepObj); currentStepObj = null; }
+        // Clear persistent safety items
+        foreach (var item in persistentSafetyItems)
+        {
+            if (item != null) Destroy(item);
+        }
+        persistentSafetyItems.Clear();
+    }
+
+    private void StartStepByStep(string answer)
+    {
+        ClearStepState();
+        string[] allLines = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        pendingAnswerLines.Clear();
+        List<string> safetyLines = new List<string>();
+
+        foreach (var raw in allLines)
+        {
+            string trimmed = raw.Trim();
+            if (trimmed.Length == 0) continue;
+            if (trimmed.StartsWith("安全提示") || trimmed.StartsWith("安全：") || trimmed.StartsWith("注意"))
+            {
+                safetyLines.Add(trimmed);
+            }
+            else
+            {
+                pendingAnswerLines.Add(trimmed);
+            }
+        }
+
+        // Show safety lines immediately as persistent items
+        foreach (var safety in safetyLines)
+        {
+            GameObject item = CreateResultItemReturnObj(safety, new Color(1f, 0.82f, 0.3f, 1f), false);
+            if (item != null) persistentSafetyItems.Add(item);
+        }
+
+        currentStepIndex = 0;
+        ShowNextStep();
+    }
+
+    private void ShowNextStep()
+    {
+        if (currentStepIndex >= pendingAnswerLines.Count - 1) return;
+        GoToStep(currentStepIndex + 1);
+    }
+
+    private void ShowPreviousStep()
+    {
+        if (currentStepIndex <= 0) return;
+        GoToStep(currentStepIndex - 1);
+    }
+
+    private void GoToStep(int index)
+    {
+        if (index < 0 || index >= pendingAnswerLines.Count) return;
+
+        // Destroy current step display
+        if (currentStepObj != null) { Destroy(currentStepObj); currentStepObj = null; }
+        DestroyButtonBar();
+
+        currentStepIndex = index;
+        string line = pendingAnswerLines[index];
+        bool isHeader = index == 0;
+        Color color = isHeader ? new Color(0.35f, 0.70f, 1f) : new Color(0.90f, 0.92f, 0.96f);
+        currentStepObj = CreateResultItemReturnObj(line, color, isHeader);
+
+        CreateButtonBar();
+    }
+
+    private void CreateButtonBar()
+    {
+        if (!EnsureContentPanelAvailable()) return;
+
+        Transform itemParent = resultContent != null ? resultContent : contentPanel;
+        float uiScale = GetAiUiScale();
+        bool hasPrev = currentStepIndex > 0;
+        bool hasNext = currentStepIndex < pendingAnswerLines.Count - 1;
+        if (!hasPrev && !hasNext) return;
+
+        // Bar container
+        GameObject barObj = new GameObject("_StepBtnBar", typeof(RectTransform), typeof(CanvasRenderer));
+        barObj.transform.SetParent(itemParent, false);
+        RectTransform barRect = barObj.GetComponent<RectTransform>();
+        barRect.anchorMin = new Vector2(0, 1); barRect.anchorMax = new Vector2(1, 1);
+        barRect.pivot = new Vector2(0.5f, 1); barRect.sizeDelta = new Vector2(0, 34f * uiScale);
+
+        LayoutElement barLE = barObj.AddComponent<LayoutElement>();
+        barLE.minHeight = 34f * uiScale; barLE.preferredHeight = 34f * uiScale;
+
+        if (hasPrev) CreateStepButton(barObj.transform, "\u25c0 \u4e0a\u4e00\u6b65", ShowPreviousStep, false, uiScale);
+        if (hasNext) CreateStepButton(barObj.transform, "\u4e0b\u4e00\u6b65 \u25b6", ShowNextStep, true, uiScale);
+    }
+
+    private GameObject CreateStepButton(Transform parent, string label, UnityEngine.Events.UnityAction action, bool alignRight, float uiScale)
+    {
+        GameObject btnObj = new GameObject("_StepBtn", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        btnObj.transform.SetParent(parent, false);
+
+        RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+        btnRect.anchorMin = alignRight ? new Vector2(0.5f, 0) : new Vector2(0, 0);
+        btnRect.anchorMax = alignRight ? new Vector2(1, 0) : new Vector2(0.5f, 0);
+        btnRect.pivot = new Vector2(0.5f, 0);
+        btnRect.sizeDelta = new Vector2(0, 32f * uiScale);
+        btnRect.anchoredPosition = Vector2.zero;
+
+        Image btnImg = btnObj.GetComponent<Image>();
+        btnImg.color = new Color(0.10f, 0.25f, 0.45f, 0.85f);
+        btnImg.raycastTarget = true;
+
+        Button btn = btnObj.GetComponent<Button>();
+        btn.onClick.AddListener(action);
+
+        GameObject labelObj = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
+        labelObj.transform.SetParent(btnObj.transform, false);
+        TMP_Text txt = labelObj.AddComponent<TextMeshProUGUI>();
+        txt.text = label;
+        txt.fontSize = 13f * uiScale;
+        txt.color = new Color(0.80f, 0.85f, 0.95f, 1f);
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.raycastTarget = false;
+        if (chineseFont != null) txt.font = chineseFont;
+
+        RectTransform labelRect = labelObj.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero; labelRect.anchorMax = Vector2.one; labelRect.sizeDelta = Vector2.zero;
+
+        return btnObj;
+    }
+
+    private void DestroyButtonBar()
+    {
+        if (contentPanel == null) return;
+        Transform clearRoot = resultContent != null ? resultContent : contentPanel;
+        for (int i = clearRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = clearRoot.GetChild(i);
+            if (child != null && child.name == "_StepBtnBar")
+            {
+                try { if (Application.isPlaying) Destroy(child.gameObject); else DestroyImmediate(child.gameObject); }
+                catch { }
+            }
+        }
+    }
+
+    private void DestroyNextButton()
+    {
+        if (nextStepButton != null)
+        {
+            Destroy(nextStepButton);
+            nextStepButton = null;
+        }
+    }
+
+    private GameObject CreateResultItemReturnObj(string text, Color color, bool isHeader)
+    {
+        if (!EnsureContentPanelAvailable()) return null;
+
+        GameObject newItem = CreateFallbackTextItem();
+        newItem.SetActive(true);
+        Transform itemParent = resultContent != null ? resultContent : contentPanel;
+        newItem.transform.SetParent(itemParent, false);
+
+        TMP_Text txt = newItem.GetComponent<TMP_Text>();
+        if (txt == null) txt = newItem.GetComponentInChildren<TMP_Text>();
+        if (txt == null) txt = newItem.AddComponent<TextMeshProUGUI>();
+        if (txt == null) return null;
+
+        txt.enabled = true;
+        txt.gameObject.SetActive(true);
+        txt.text = text;
+        txt.color = color;
+        txt.raycastTarget = false;
+        float uiScale = GetAiUiScale();
+        txt.fontSize = (isHeader ? 15f : 12.5f) * uiScale;
+        txt.enableWordWrapping = true;
+        txt.overflowMode = TextOverflowModes.Overflow;
+        if (chineseFont != null) txt.font = chineseFont;
+
+        RectTransform textRect = txt.rectTransform;
+        textRect.anchorMin = new Vector2(0, 1);
+        textRect.anchorMax = new Vector2(1, 1);
+        textRect.pivot = new Vector2(0.5f, 1);
+        textRect.sizeDelta = new Vector2(0, (isHeader ? 26f : 22f) * uiScale);
+
+        LayoutElement layoutElement = newItem.GetComponent<LayoutElement>();
+        if (layoutElement == null) layoutElement = newItem.AddComponent<LayoutElement>();
+
+        txt.ForceMeshUpdate(true, true);
+        float availableWidth = 120f * uiScale;
+        if (itemParent is RectTransform panelRect)
+            availableWidth = Mathf.Max(90f * uiScale, panelRect.rect.width - 6f * uiScale);
+        else if (contentPanel is RectTransform cr)
+            availableWidth = Mathf.Max(90f * uiScale, cr.rect.width - 28f * uiScale);
+
+        float preferredHeight = Mathf.Ceil(txt.GetPreferredValues(text, availableWidth, 0f).y) + 6f * uiScale;
+        preferredHeight = Mathf.Max(preferredHeight, (isHeader ? 28f : 24f) * uiScale);
+        textRect.sizeDelta = new Vector2(0, preferredHeight);
+        layoutElement.minHeight = preferredHeight;
+        layoutElement.preferredHeight = preferredHeight;
+
+        try { if (resultContent != null) LayoutRebuilder.ForceRebuildLayoutImmediate(resultContent); }
+        catch { }
+
+        if (resultScrollRect != null) resultScrollRect.verticalNormalizedPosition = 1f;
+        return newItem;
     }
 
     private void CancelPendingAsk()
