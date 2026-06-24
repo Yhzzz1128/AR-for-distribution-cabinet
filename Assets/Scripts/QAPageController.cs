@@ -19,6 +19,13 @@ public class QAPageController : MonoBehaviour
 
     public void Show()
     {
+        // Auto-load Chinese font
+        if (menuFont == null)
+        {
+            var mgr = FindObjectOfType<AI_Search_Manager>();
+            if (mgr != null && mgr.chineseFont != null)
+                menuFont = mgr.chineseFont;
+        }
         if (pagePanel != null) { pagePanel.SetActive(true); return; }
         CreatePage();
     }
@@ -199,8 +206,14 @@ public class QAPageController : MonoBehaviour
             }
         }
 
-        // Scroll to top
-        if (scrollRect != null) scrollRect.verticalNormalizedPosition = 1f;
+        // Force layout rebuild and scroll to top
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        if (scrollRect != null)
+        {
+            scrollRect.verticalNormalizedPosition = 1f;
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     void AddResultItem(string text, Color color)
@@ -210,7 +223,7 @@ public class QAPageController : MonoBehaviour
         item.transform.SetParent(contentRect, false);
 
         LayoutElement le = item.GetComponent<LayoutElement>();
-        le.minHeight = 22f * s;
+        le.minHeight = 26f * s;
 
         TMP_Text txt = item.AddComponent<TextMeshProUGUI>();
         txt.text = text;
@@ -223,7 +236,7 @@ public class QAPageController : MonoBehaviour
         RectTransform rt = item.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(0, 1); rt.anchorMax = new Vector2(1, 1);
         rt.pivot = new Vector2(0.5f, 1);
-        rt.sizeDelta = new Vector2(0, 22f * s);
+        rt.sizeDelta = new Vector2(0, 26f * s);
 
         resultItems.Add(item);
     }
@@ -259,3 +272,4 @@ public class QAPageController : MonoBehaviour
         return btn;
     }
 }
+

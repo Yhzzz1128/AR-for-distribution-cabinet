@@ -31,6 +31,17 @@ public class MainMenuController : MonoBehaviour
     private QAPageController qaPage;
     private bool menuShown = false;
 
+    void Awake()
+    {
+        // Auto-load Chinese font from AI_Search_Manager
+        if (menuFont == null)
+        {
+            var searchMgr = FindObjectOfType<AI_Search_Manager>();
+            if (searchMgr != null && searchMgr.chineseFont != null)
+                menuFont = searchMgr.chineseFont;
+        }
+    }
+
     void Start()
     {
         canvas = FindObjectOfType<Canvas>();
@@ -56,9 +67,8 @@ public class MainMenuController : MonoBehaviour
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = false;
 
-        var searchMgr = FindObjectOfType<AI_Search_Manager>();
-        if (searchMgr != null) searchMgr.enabled = false;
-
+        // Keep AI_Search_Manager enabled so it initializes properly;
+        // just hide its UI elements until AR mode is entered
         var qaPanel = GameObject.Find("QAPanel");
         if (qaPanel != null) qaPanel.SetActive(false);
 
@@ -79,7 +89,13 @@ public class MainMenuController : MonoBehaviour
         if (interactor != null) interactor.enabled = true;
 
         var searchMgr = FindObjectOfType<AI_Search_Manager>();
-        if (searchMgr != null) searchMgr.enabled = true;
+        if (searchMgr != null)
+        {
+            searchMgr.enabled = true;
+            // Force re-init if needed (handles case where Start was deferred)
+            if (!searchMgr.gameObject.activeInHierarchy)
+                searchMgr.gameObject.SetActive(true);
+        }
 
         var sousuo = GameObject.Find("sousuo");
         if (sousuo != null) sousuo.SetActive(true);
@@ -179,26 +195,26 @@ public class MainMenuController : MonoBehaviour
         GameObject content = new GameObject("MenuContent", typeof(RectTransform));
         content.transform.SetParent(menuPanel.transform, false);
         RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, Vector2.zero, new Vector2(340f * s, 380f * s));
+        SetAnchorCenter(cr, Vector2.zero, new Vector2(340f * s, 420f * s));
 
         MakeTMPText("MenuTitle", content.transform, menuTitle, 26f * s, accentColor, FontStyles.Bold,
-            new Vector2(0, -20f * s), new Vector2(300f * s, 44f * s), TextAlignmentOptions.Center);
+            new Vector2(0, -10f * s), new Vector2(320f * s, 44f * s), TextAlignmentOptions.Center);
 
         // Divider
         GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
         div.transform.SetParent(content.transform, false);
         RectTransform dr = div.GetComponent<RectTransform>();
-        SetAnchorTop(dr, new Vector2(0, -72f * s), new Vector2(200f * s, 1f));
+        SetAnchorTop(dr, new Vector2(0, -58f * s), new Vector2(220f * s, 1f));
         div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
 
         MakeTMPText("MenuDesc", content.transform, menuDesc, 12f * s, new Color(0.55f, 0.60f, 0.72f, 1f), FontStyles.Normal,
-            new Vector2(0, -88f * s), new Vector2(280f * s, 54f * s), TextAlignmentOptions.Center);
+            new Vector2(0, -74f * s), new Vector2(300f * s, 60f * s), TextAlignmentOptions.Center);
 
         // Button 1: AR Inspection
-        MakeMenuButton(content.transform, btnARText, 0, -160f * s, 220f * s, 50f * s, s, () => StartCoroutine(EnterARMode()));
+        MakeMenuButton(content.transform, btnARText, 0, -150f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterARMode()));
 
         // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -225f * s, 220f * s, 50f * s, s, () => StartCoroutine(EnterQAMode()));
+        MakeMenuButton(content.transform, btnQAText, 0, -220f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterQAMode()));
     }
 
     void MakeMenuButton(Transform parent, string label, float x, float y, float w, float h, float s, UnityEngine.Events.UnityAction action)
@@ -347,4 +363,5 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
