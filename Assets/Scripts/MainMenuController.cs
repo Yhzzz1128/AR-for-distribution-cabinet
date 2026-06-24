@@ -168,18 +168,36 @@ public class MainMenuController : MonoBehaviour
         cg.alpha = 1f;
     }
 
+    void MakeMenuTopTitle(string title, float s)
+    {
+        GameObject titleObj = new GameObject("MenuTopTitle", typeof(RectTransform));
+        titleObj.transform.SetParent(menuPanel.transform, false);
+        TMP_Text txt = titleObj.AddComponent<TextMeshProUGUI>();
+        txt.text = title;
+        txt.fontSize = 26f * s;
+        txt.color = accentColor;
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.fontStyle = FontStyles.Bold;
+        if (menuFont != null) txt.font = menuFont;
+        RectTransform tr = titleObj.GetComponent<RectTransform>();
+        tr.anchorMin = new Vector2(0.5f, 1f); tr.anchorMax = new Vector2(0.5f, 1f);
+        tr.pivot = new Vector2(0.5f, 1f);
+        tr.anchoredPosition = new Vector2(0, -16f * s);
+        tr.sizeDelta = new Vector2(320f * s, 44f * s);
+    }
     void CreateMenuPanel()
     {
         float s = GetScale();
         menuPanel = MakeFullscreenPanel("MainMenuPanel", menuBgColor);
 
+        // Title at the very top of the panel
+        MakeMenuTopTitle(menuTitle, s);
+
+        // Centered content container
         GameObject content = new GameObject("MenuContent", typeof(RectTransform));
         content.transform.SetParent(menuPanel.transform, false);
         RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, Vector2.zero, new Vector2(340f * s, 420f * s));
-
-        MakeTMPText("MenuTitle", content.transform, menuTitle, 26f * s, accentColor, FontStyles.Bold,
-            new Vector2(0, -10f * s), new Vector2(320f * s, 44f * s), TextAlignmentOptions.Center);
+        SetAnchorCenter(cr, new Vector2(0, 20f * s), new Vector2(340f * s, 360f * s));
 
         // Divider
         GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
@@ -348,6 +366,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
 
 

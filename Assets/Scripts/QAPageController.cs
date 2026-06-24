@@ -21,6 +21,7 @@ public class QAPageController : MonoBehaviour
     // Knowledge bases
     private List<KBEntry> operationKB = new List<KBEntry>();
     private List<KBEntry> generalKB = new List<KBEntry>();
+    private TMP_Text statusText;
 
     [Serializable]
     public class KBEntry
@@ -215,6 +216,33 @@ public class QAPageController : MonoBehaviour
         searchInput.placeholder = placeholder;
 
         searchInput.onSubmit.AddListener(OnSearchSubmit);
+        searchInput.onEndEdit.AddListener(OnSearchSubmit);
+
+        // Hint
+        GameObject hintObj = new GameObject("SearchHint", typeof(RectTransform));
+        hintObj.transform.SetParent(parent, false);
+        TMP_Text hintTxt = hintObj.AddComponent<TextMeshProUGUI>();
+        hintTxt.text = "Press Enter to search";
+        hintTxt.fontSize = 10f * s; hintTxt.color = new Color(0.35f, 0.40f, 0.55f, 0.7f);
+        hintTxt.alignment = TextAlignmentOptions.Center;
+        if (menuFont != null) hintTxt.font = menuFont;
+        RectTransform hr = hintObj.GetComponent<RectTransform>();
+        hr.anchorMin = new Vector2(0, 1); hr.anchorMax = new Vector2(1, 1);
+        hr.pivot = new Vector2(0.5f, 1);
+        hr.anchoredPosition = new Vector2(0, -112f * s); hr.sizeDelta = new Vector2(-24f * s, 18f * s);
+
+        // Status
+        GameObject statObj = new GameObject("KBStatus", typeof(RectTransform));
+        statObj.transform.SetParent(parent, false);
+        statusText = statObj.AddComponent<TextMeshProUGUI>();
+        statusText.text = "Loaded: " + (operationKB.Count + generalKB.Count) + " entries";
+        statusText.fontSize = 10f * s; statusText.color = new Color(0.30f, 0.60f, 0.40f, 0.7f);
+        statusText.alignment = TextAlignmentOptions.Center;
+        if (menuFont != null) statusText.font = menuFont;
+        RectTransform sr2 = statObj.GetComponent<RectTransform>();
+        sr2.anchorMin = new Vector2(0, 1); sr2.anchorMax = new Vector2(1, 1);
+        sr2.pivot = new Vector2(0.5f, 1);
+        sr2.anchoredPosition = new Vector2(0, -132f * s); sr2.sizeDelta = new Vector2(-24f * s, 18f * s);
     }
 
     void MakeResultsArea(Transform parent, float s)
@@ -417,3 +445,6 @@ public class QAPageController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 }
+
+
+
