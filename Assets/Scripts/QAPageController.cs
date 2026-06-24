@@ -174,15 +174,27 @@ public class QAPageController : MonoBehaviour
 
     void MakeSearchInput(Transform parent, float s)
     {
+        if (parent == null) { Debug.LogError("[QAPage] MakeSearchInput: parent is null"); return; }
+
+        // Row container for input + search button
+        GameObject row = new GameObject("SearchRow", typeof(RectTransform));
+        row.transform.SetParent(parent, false);
+        RectTransform rr = row.GetComponent<RectTransform>();
+        rr.anchorMin = new Vector2(0, 1); rr.anchorMax = new Vector2(1, 1);
+        rr.pivot = new Vector2(0.5f, 1);
+        rr.anchoredPosition = new Vector2(0, -64f * s); rr.sizeDelta = new Vector2(-24f * s, 44f * s);
+
         GameObject inputObj = new GameObject("SearchInput", typeof(RectTransform), typeof(Image));
-        inputObj.transform.SetParent(parent, false);
+        inputObj.transform.SetParent(row.transform, false);
         RectTransform ir = inputObj.GetComponent<RectTransform>();
-        ir.anchorMin = new Vector2(0, 1); ir.anchorMax = new Vector2(1, 1);
-        ir.pivot = new Vector2(0.5f, 1);
-        ir.anchoredPosition = new Vector2(0, -64f * s); ir.sizeDelta = new Vector2(-24f * s, 44f * s);
+        ir.anchorMin = new Vector2(0, 0); ir.anchorMax = new Vector2(1, 1);
+        ir.pivot = new Vector2(0.5f, 0.5f);
+        ir.anchoredPosition = Vector2.zero; ir.offsetMin = Vector2.zero;
+        ir.offsetMax = new Vector2(-64f * s, 0);
         inputObj.GetComponent<Image>().color = new Color(0.06f, 0.09f, 0.18f, 0.92f);
 
         searchInput = inputObj.AddComponent<TMP_InputField>();
+        if (searchInput == null) { Debug.LogError("[QAPage] Failed to add TMP_InputField"); return; }
         searchInput.lineType = TMP_InputField.LineType.SingleLine;
 
         GameObject textArea = new GameObject("TextArea", typeof(RectTransform));
@@ -209,6 +221,29 @@ public class QAPageController : MonoBehaviour
 
         searchInput.onSubmit.AddListener(OnSearchSubmit);
         searchInput.onEndEdit.AddListener(OnSearchSubmit);
+
+        // Search button (reliable trigger on all platforms)
+        GameObject searchBtn = new GameObject("SearchBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+        searchBtn.transform.SetParent(row.transform, false);
+        RectTransform sbr = searchBtn.GetComponent<RectTransform>();
+        sbr.anchorMin = new Vector2(1, 0); sbr.anchorMax = new Vector2(1, 1);
+        sbr.pivot = new Vector2(1, 0.5f); sbr.anchoredPosition = Vector2.zero;
+        sbr.sizeDelta = new Vector2(58f * s, 0);
+        searchBtn.GetComponent<Image>().color = new Color(0.10f, 0.30f, 0.55f, 0.9f);
+        searchBtn.GetComponent<Button>().onClick.AddListener(() => {
+            if (searchInput != null) OnSearchSubmit(searchInput.text);
+        });
+
+        GameObject btnLabel = new GameObject("BtnLabel", typeof(RectTransform));
+        btnLabel.transform.SetParent(searchBtn.transform, false);
+        TMP_Text btnTxt = btnLabel.AddComponent<TextMeshProUGUI>();
+        btnTxt.text = "Search";
+        btnTxt.fontSize = 12f * s;
+        btnTxt.color = new Color(0.90f, 0.93f, 0.98f, 1f);
+        btnTxt.alignment = TextAlignmentOptions.Center;
+        if (menuFont != null) btnTxt.font = menuFont;
+        RectTransform blr = btnLabel.GetComponent<RectTransform>();
+        blr.anchorMin = Vector2.zero; blr.anchorMax = Vector2.one; blr.sizeDelta = Vector2.zero;
 
         // Hint
         GameObject hintObj = new GameObject("SearchHint", typeof(RectTransform));
@@ -450,6 +485,7 @@ public class QAPageController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 }
+
 
 
 
