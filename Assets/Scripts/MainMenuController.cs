@@ -64,19 +64,10 @@ public class MainMenuController : MonoBehaviour
 
     void DisableARExperience()
     {
+        // Only disable AR interaction; keep search UI active so AI_Search_Manager initializes properly
+        // The main menu overlay is full-screen so the search UI won't be visible anyway
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = false;
-
-        // Keep AI_Search_Manager enabled so it initializes properly;
-        // just hide its UI elements until AR mode is entered
-        var qaPanel = GameObject.Find("QAPanel");
-        if (qaPanel != null) qaPanel.SetActive(false);
-
-        var sousuo = GameObject.Find("sousuo");
-        if (sousuo != null) sousuo.SetActive(false);
-
-        var resultPanel = GameObject.Find("ResultPanel");
-        if (resultPanel != null) resultPanel.SetActive(false);
 
         if (arBackButton != null) arBackButton.SetActive(false);
     }
@@ -88,20 +79,10 @@ public class MainMenuController : MonoBehaviour
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = true;
 
+        // AI_Search_Manager and its UI were never disabled, no need to re-enable
+        // Just ensure they are active
         var searchMgr = FindObjectOfType<AI_Search_Manager>();
-        if (searchMgr != null)
-        {
-            searchMgr.enabled = true;
-            // Force re-init if needed (handles case where Start was deferred)
-            if (!searchMgr.gameObject.activeInHierarchy)
-                searchMgr.gameObject.SetActive(true);
-        }
-
-        var sousuo = GameObject.Find("sousuo");
-        if (sousuo != null) sousuo.SetActive(true);
-
-        var resultPanel = GameObject.Find("ResultPanel");
-        if (resultPanel != null) resultPanel.SetActive(true);
+        if (searchMgr != null) searchMgr.enabled = true;
 
         // Create back button on AR page
         if (arBackButton == null)
@@ -273,8 +254,12 @@ public class MainMenuController : MonoBehaviour
 
     public void ReturnToMenu()
     {
-        // Called by back button on AR page
-        DisableARExperience();
+        // Disable AR interaction, keep search UI alive
+        var interactor = FindObjectOfType<ARInteractor>();
+        if (interactor != null) interactor.enabled = false;
+
+        if (arBackButton != null) arBackButton.SetActive(false);
+
         menuPanel.SetActive(true);
         CanvasGroup cg = menuPanel.GetComponent<CanvasGroup>();
         if (cg == null) cg = menuPanel.AddComponent<CanvasGroup>();
@@ -363,5 +348,6 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
 
