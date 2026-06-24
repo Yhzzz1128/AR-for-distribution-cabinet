@@ -790,6 +790,11 @@ public class AI_Search_Manager : MonoBehaviour
         ShowNextStep();
     }
 
+    public List<OperationEntry> SearchKnowledgeBase(string query)
+    {
+        return FindAllMatches(query);
+    }
+
     private List<OperationEntry> FindAllMatches(string query)
     {
         if (knowledgeEntries.Count == 0) return null;
@@ -1507,6 +1512,7 @@ public class AI_Search_Manager : MonoBehaviour
         public string content;
     }
 }
+
 
 
 
