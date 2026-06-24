@@ -278,42 +278,47 @@ public class QAPageController : MonoBehaviour
 
     // ===== Search =====
 
-    void OnSearchSubmit(string query)
+        void OnSearchSubmit(string query)
     {
-        if (string.IsNullOrWhiteSpace(query)) return;
+        Debug.Log("[QAPage] Search submitted: '" + query + "' ops=" + operationKB.Count + " gen=" + generalKB.Count);
+
         ClearResults();
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            ShowFeedback("搜索框为空或没有搜索到相关内容");
+            return;
+        }
 
         string q = NormalizeText(query);
         var scored = new List<(KBEntry entry, int score, string source)>();
 
-        // Search operation knowledge base
         foreach (var e in operationKB)
         {
             int s = ScoreOpEntry(q, e);
             if (s >= 1) scored.Add((e, s, e.source));
         }
 
-        // Search general knowledge base
         foreach (var e in generalKB)
         {
             int s = ScoreGeneralEntry(q, e);
             if (s >= 1) scored.Add((e, s, e.source));
         }
 
+        Debug.Log("[QAPage] Scored: " + scored.Count);
+
         if (scored.Count == 0)
         {
-            AddResultItem("No results found for: " + query, new Color(0.75f, 0.78f, 0.85f));
+            ShowFeedback("搜索框为空或没有搜索到相关内容");
             return;
         }
 
         scored.Sort((a, b) => b.score.CompareTo(a.score));
-
-        AddResultItem("Found " + scored.Count + " result(s) across all knowledge bases:", new Color(0.35f, 0.70f, 1f));
+        AddResultItem("Found " + scored.Count + " result(s):", new Color(0.35f, 0.70f, 1f));
 
         foreach (var (entry, _, src) in scored)
         {
             AddResultItem("[" + src + "] " + (entry.title ?? entry.command), new Color(0.35f, 0.70f, 1f));
-
             if (entry.steps != null && entry.steps.Length > 0)
             {
                 for (int i = 0; i < entry.steps.Length; i++)
@@ -323,17 +328,25 @@ public class QAPageController : MonoBehaviour
             {
                 AddResultItem(entry.content, new Color(0.82f, 0.85f, 0.90f));
             }
-
             if (entry.category != null)
-                AddResultItem("   Category: " + entry.category, new Color(0.40f, 0.45f, 0.55f));
-
+                AddResultItem("  Category: " + entry.category, new Color(0.40f, 0.45f, 0.55f));
             if (scored.Count > 1)
                 AddResultItem("---", new Color(0.15f, 0.20f, 0.35f));
         }
 
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        if (contentRect != null && contentRect.parent != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect.parent as RectTransform);
         if (scrollRect != null) { scrollRect.verticalNormalizedPosition = 1f; Canvas.ForceUpdateCanvases(); }
+    }
+
+    void ShowFeedback(string msg)
+    {
+        AddResultItem(msg, new Color(1f, 0.65f, 0.3f, 1f));
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        if (scrollRect != null) scrollRect.verticalNormalizedPosition = 1f;
     }
 
     int ScoreOpEntry(string query, KBEntry entry)
@@ -437,6 +450,7 @@ public class QAPageController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 }
+
 
 
 
