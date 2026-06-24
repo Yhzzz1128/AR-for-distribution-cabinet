@@ -197,23 +197,41 @@ public class MainMenuController : MonoBehaviour
         GameObject content = new GameObject("MenuContent", typeof(RectTransform));
         content.transform.SetParent(menuPanel.transform, false);
         RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, new Vector2(0, 20f * s), new Vector2(340f * s, 360f * s));
+        SetAnchorCenter(cr, new Vector2(0, 20f * s), new Vector2(340f * s, 200f * s));
 
         // Divider
         GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
         div.transform.SetParent(content.transform, false);
         RectTransform dr = div.GetComponent<RectTransform>();
-        SetAnchorTop(dr, new Vector2(0, -58f * s), new Vector2(220f * s, 1f));
+        SetAnchorTop(dr, new Vector2(0, -44f * s), new Vector2(220f * s, 1f));
         div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
 
-        MakeTMPText("MenuDesc", content.transform, menuDesc, 12f * s, new Color(0.55f, 0.60f, 0.72f, 1f), FontStyles.Normal,
-            new Vector2(0, -74f * s), new Vector2(300f * s, 60f * s), TextAlignmentOptions.Center);
-
         // Button 1: AR Inspection
-        MakeMenuButton(content.transform, btnARText, 0, -150f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterARMode()));
+        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterARMode()));
 
         // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -220f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterQAMode()));
+        MakeMenuButton(content.transform, btnQAText, 0, -130f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterQAMode()));
+
+        // Footer description at bottom of page
+        MakeFooterDesc(menuDesc, s);
+    }
+
+    void MakeFooterDesc(string text, float s)
+    {
+        GameObject footer = new GameObject("MenuFooter", typeof(RectTransform));
+        footer.transform.SetParent(menuPanel.transform, false);
+        TMP_Text txt = footer.AddComponent<TextMeshProUGUI>();
+        txt.text = text;
+        txt.fontSize = 11f * s;
+        txt.color = new Color(0.45f, 0.50f, 0.62f, 0.8f);
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.enableWordWrapping = true;
+        if (menuFont != null) txt.font = menuFont;
+        RectTransform fr = footer.GetComponent<RectTransform>();
+        fr.anchorMin = new Vector2(0.5f, 0f); fr.anchorMax = new Vector2(0.5f, 0f);
+        fr.pivot = new Vector2(0.5f, 0f);
+        fr.anchoredPosition = new Vector2(0, 24f * s);
+        fr.sizeDelta = new Vector2(300f * s, 40f * s);
     }
 
     void MakeMenuButton(Transform parent, string label, float x, float y, float w, float h, float s, UnityEngine.Events.UnityAction action)
@@ -366,6 +384,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
 
 

@@ -38,6 +38,12 @@ public class QAPageController : MonoBehaviour
     [Serializable]
     public class KBWrapper { public KBEntry[] items; }
 
+    // Local wrapper for OperationData.json (avoids dependency on AI_Search_Manager types)
+    [Serializable]
+    public class OpDataEntry { public string command; public string title; public string[] keywords; public string[] steps; }
+    [Serializable]
+    public class OpDataWrapper { public OpDataEntry[] items; }
+
     public void Show()
     {
         if (menuFont == null)
@@ -57,56 +63,42 @@ public class QAPageController : MonoBehaviour
 
     void LoadKnowledgeBases()
     {
-        // Load v1.3 operation knowledge base
         TextAsset opJson = Resources.Load<TextAsset>("OperationData");
         if (opJson != null)
         {
-            try
+            string wrapped = opJson.text.Trim().StartsWith("[") ? "{\"items\":" + opJson.text + "}" : opJson.text;
+            var wrapper = JsonUtility.FromJson<OpDataWrapper>(wrapped);
+            if (wrapper != null && wrapper.items != null)
             {
-                string wrapped = opJson.text.Trim().StartsWith("[") ? "{\"items\":" + opJson.text + "}" : opJson.text;
-                var wrapper = JsonUtility.FromJson<AI_Search_Manager.OperationDataWrapper>(wrapped);
-                if (wrapper?.items != null)
+                Debug.Log("[QAPage] Loaded " + wrapper.items.Length + " operation entries");
+                foreach (var e in wrapper.items)
                 {
-                    foreach (var e in wrapper.items)
+                    operationKB.Add(new KBEntry
                     {
-                        operationKB.Add(new KBEntry
-                        {
-                            title = e.title,
-                            command = e.command,
-                            keywords = e.keywords,
-                            steps = e.steps,
-                            source = "操作流程"
-                        });
-                    }
+                        title = e.title, command = e.command, keywords = e.keywords,
+                        steps = e.steps, source = "操作流程"
+                    });
                 }
             }
-            catch { }
         }
 
-        // Load new general knowledge base
         TextAsset gkJson = Resources.Load<TextAsset>("PDG_Knowledge");
         if (gkJson != null)
         {
-            try
+            string wrapped = gkJson.text.Trim().StartsWith("[") ? "{\"items\":" + gkJson.text + "}" : gkJson.text;
+            var wrapper = JsonUtility.FromJson<KBWrapper>(wrapped);
+            if (wrapper != null && wrapper.items != null)
             {
-                string wrapped = gkJson.text.Trim().StartsWith("[") ? "{\"items\":" + gkJson.text + "}" : gkJson.text;
-                var wrapper = JsonUtility.FromJson<KBWrapper>(wrapped);
-                if (wrapper?.items != null)
+                Debug.Log("[QAPage] Loaded " + wrapper.items.Length + " general knowledge entries");
+                foreach (var e in wrapper.items)
                 {
-                    foreach (var e in wrapper.items)
+                    generalKB.Add(new KBEntry
                     {
-                        generalKB.Add(new KBEntry
-                        {
-                            title = e.title,
-                            category = e.category,
-                            keywords = e.keywords,
-                            content = e.content,
-                            source = "知识百科"
-                        });
-                    }
+                        title = e.title, category = e.category, keywords = e.keywords,
+                        content = e.content, source = "知识百科"
+                    });
                 }
             }
-            catch { }
         }
     }
 
@@ -445,6 +437,8 @@ public class QAPageController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 }
+
+
 
 
 
