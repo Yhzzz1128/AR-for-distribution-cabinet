@@ -47,6 +47,10 @@ public class AI_Search_Manager : MonoBehaviour
     private GameObject prevStepButton;
     private GameObject currentStepObj;
     private List<GameObject> persistentSafetyItems = new List<GameObject>();
+    // Multi-result selection state
+    private List<OperationEntry> selectionMatches;
+    private bool isShowingSelection = false;
+
 
     private void Start()
     {
@@ -726,7 +730,7 @@ public class AI_Search_Manager : MonoBehaviour
 
     private void ShowLocalAnswer(string userQuestion, string note)
     {
-        OperationEntry best = FindBestLocalMatch(userQuestion);
+        var matches = FindAllMatches(userQuestion);
 
         if (!string.IsNullOrWhiteSpace(note))
         {
@@ -736,11 +740,23 @@ public class AI_Search_Manager : MonoBehaviour
         // Remove only "AI thinking" text, keep the question
         ClearTemporaryItems();
 
-        if (best == null)
+        if (matches == null || matches.Count == 0)
         {
             CreateResultItem("本地知识库中没有找到足够匹配的流程。请换成更具体的问题。", new Color(0.90f, 0.92f, 0.96f), false);
             return;
         }
+
+        if (matches.Count > 1)
+        {
+            ShowSelectionList(matches);
+            return;
+        }
+
+        ShowAnswerSteps(matches[0]);
+    }
+
+    private void ShowAnswerSteps(OperationEntry best)
+    {
 
         // Build step list directly from data
         List<string> steps = new List<string>();
@@ -772,6 +788,99 @@ public class AI_Search_Manager : MonoBehaviour
         if (safetyItem != null) persistentSafetyItems.Add(safetyItem);
 
         ShowNextStep();
+    }
+
+    private List<OperationEntry> FindAllMatches(string query)
+    {
+        if (knowledgeEntries.Count == 0) return null;
+
+        string normalizedQuery = NormalizeText(query);
+        var scored = new List<ScoredEntry>();
+
+        foreach (OperationEntry entry in knowledgeEntries)
+        {
+            if (entry == null) continue;
+            int score = ScoreEntry(normalizedQuery, entry);
+            if (score >= 1) scored.Add(new ScoredEntry { entry = entry, score = score });
+        }
+
+        if (scored.Count == 0) return null;
+
+        scored.Sort((a, b) => b.score.CompareTo(a.score));
+        var matches = new List<OperationEntry>();
+        foreach (var s in scored) matches.Add(s.entry);
+        return matches;
+    }
+
+    private void ShowSelectionList(List<OperationEntry> matches)
+    {
+        if (matches == null || matches.Count == 0) return;
+
+        isShowingSelection = true;
+        selectionMatches = matches;
+        ClearResults();
+        ClearStepState();
+
+        CreateResultItem("找到 " + matches.Count + " 个匹配结果，请选择：", new Color(0.35f, 0.70f, 1f), true);
+
+        float uiScale = GetAiUiScale();
+        Transform itemParent = resultContent != null ? resultContent : contentPanel;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            OperationEntry entry = matches[i];
+            int idx = i;
+
+            string label = (i + 1) + ". " + (entry.title ?? entry.command ?? "(无标题)");
+            GameObject btnObj = new GameObject("_SelectBtn_" + i, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
+            btnObj.transform.SetParent(itemParent, false);
+
+            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(0, 1); btnRect.anchorMax = new Vector2(1, 1);
+            btnRect.pivot = new Vector2(0.5f, 1);
+            btnRect.sizeDelta = new Vector2(0, 34f * uiScale);
+
+            LayoutElement le = btnObj.GetComponent<LayoutElement>();
+            le.minHeight = 34f * uiScale; le.preferredHeight = 34f * uiScale;
+
+            Image btnImg = btnObj.GetComponent<Image>();
+            btnImg.color = new Color(0.08f, 0.20f, 0.38f, 0.88f);
+            btnImg.raycastTarget = true;
+
+            Button btn = btnObj.GetComponent<Button>();
+            btn.onClick.AddListener(() => HandleSelectionPicked(idx));
+
+            GameObject labelObj = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
+            labelObj.transform.SetParent(btnObj.transform, false);
+            TMP_Text txt = labelObj.AddComponent<TextMeshProUGUI>();
+            txt.text = label;
+            txt.fontSize = 13f * uiScale;
+            txt.color = new Color(0.85f, 0.90f, 0.98f, 1f);
+            txt.alignment = TextAlignmentOptions.MidlineLeft;
+            txt.raycastTarget = false;
+            txt.enableWordWrapping = true;
+            if (chineseFont != null) txt.font = chineseFont;
+
+            RectTransform labelRect = labelObj.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero; labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(12f * uiScale, 0);
+            labelRect.offsetMax = new Vector2(-8f * uiScale, 0);
+        }
+
+        try { if (resultContent != null) LayoutRebuilder.ForceRebuildLayoutImmediate(resultContent); }
+        catch { }
+        if (resultScrollRect != null) resultScrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    private void HandleSelectionPicked(int index)
+    {
+        if (selectionMatches == null || index < 0 || index >= selectionMatches.Count) return;
+        OperationEntry picked = selectionMatches[index];
+        isShowingSelection = false;
+        selectionMatches = null;
+        ClearResults();
+        ClearStepState();
+        ShowAnswerSteps(picked);
     }
 
     private OperationEntry FindBestLocalMatch(string query)
@@ -1360,6 +1469,12 @@ public class AI_Search_Manager : MonoBehaviour
     }
 
     [Serializable]
+    private class ScoredEntry
+    {
+        public OperationEntry entry;
+        public int score;
+    }
+
     public class AIRequestData
     {
         public string model;
@@ -1392,4 +1507,9 @@ public class AI_Search_Manager : MonoBehaviour
         public string content;
     }
 }
+
+
+
+
+
 
