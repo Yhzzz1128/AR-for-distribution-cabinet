@@ -1,5 +1,5 @@
 # AR 配电柜展示项目课程文档
-
+此项目基于kangruobing/AR-peidiangui.git
 ## 1. 课程目标
 
 本课程展示项目基于 Unity、EasyAR 和配电柜 AR 示例工程，帮助同学完成一个可运行、可扩展的 AR 交互大作业。通过本项目，同学需要掌握：
