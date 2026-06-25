@@ -128,7 +128,7 @@ public class ButtonQAPageController : MonoBehaviour
         detailPanel = MakeGO("DetailPanel", pagePanel.transform);
         detailPanel.transform.SetAsLastSibling();
         detailPanel.AddComponent<Image>().color = new Color(0.03f, 0.06f, 0.16f, 0.97f);
-        AnchorOff(detailPanel, 0.04f, 0.8f, 0.96f, 0.04f);
+        AnchorOff(detailPanel, 0.04f, 0.8f, 0.96f, 0.04f, 0, 0, 0, 0);
 
         // Close X
         MakeBtn(detailPanel.transform, "X", -32f * s, -10f * s, 28f * s, 28f * s,
