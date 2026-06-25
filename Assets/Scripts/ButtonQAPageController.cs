@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class ButtonQAPageController : MonoBehaviour
 {
@@ -9,183 +10,207 @@ public class ButtonQAPageController : MonoBehaviour
     public System.Action OnBackToMenu;
 
     private GameObject pagePanel;
-    private ButtonQA buttonQA;
+    private GameObject detailOverlay;
+    private Text detailText;
+
+    private class BtnInfo { public string name; public string answer; public string[] keywords; }
+    private List<BtnInfo> buttons = new List<BtnInfo>();
+
+    [System.Serializable]
+    private class BtnData { public string name; public string answer; public string[] keywords; }
+    [System.Serializable]
+    private class BtnWrapper { public BtnData[] items; }
 
     public void Show()
     {
-        if (menuFont == null)
-        {
-            var mgr = FindObjectOfType<AI_Search_Manager>();
-            if (mgr != null && mgr.chineseFont != null) menuFont = mgr.chineseFont;
-        }
+        if (canvas == null) canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
         if (pagePanel != null) { pagePanel.SetActive(true); return; }
+        LoadData();
         CreatePage();
     }
 
     public void Hide()
     {
         if (pagePanel != null) pagePanel.SetActive(false);
+        if (detailOverlay != null) detailOverlay.SetActive(false);
+    }
+
+    void LoadData()
+    {
+        buttons.Clear();
+        TextAsset json = Resources.Load<TextAsset>("ButtonQA_Data");
+        if (json != null)
+        {
+            string wrapped = json.text.Trim().StartsWith("[") ? "{\"items\":" + json.text + "}" : json.text;
+            var w = JsonUtility.FromJson<BtnWrapper>(wrapped);
+            if (w != null && w.items != null)
+            {
+                foreach (var b in w.items)
+                    buttons.Add(new BtnInfo { name = b.name, answer = b.answer, keywords = b.keywords });
+            }
+        }
     }
 
     void CreatePage()
     {
-        if (canvas == null) canvas = FindObjectOfType<Canvas>();
-        if (canvas == null) return;
-
         float s = Mathf.Clamp(Screen.width / 540f, 1f, 2f);
 
-        // Semi-transparent overlay so camera feed shows through
         pagePanel = new GameObject("ButtonQAPage", typeof(RectTransform), typeof(Image));
         pagePanel.transform.SetParent(canvas.transform, false);
         pagePanel.transform.SetAsLastSibling();
         RectTransform pr = pagePanel.GetComponent<RectTransform>();
         pr.anchorMin = Vector2.zero; pr.anchorMax = Vector2.one;
         pr.offsetMin = pr.offsetMax = Vector2.zero;
-        pagePanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
+        pagePanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
 
-        // Top bar - narrow, just back button and title
+        // Top bar
         GameObject topBar = new GameObject("TopBar", typeof(RectTransform), typeof(Image));
         topBar.transform.SetParent(pagePanel.transform, false);
         RectTransform tb = topBar.GetComponent<RectTransform>();
         tb.anchorMin = new Vector2(0, 1); tb.anchorMax = new Vector2(1, 1);
         tb.pivot = new Vector2(0.5f, 1);
         tb.sizeDelta = new Vector2(0, 40f * s); tb.anchoredPosition = Vector2.zero;
-        topBar.GetComponent<Image>().color = new Color(0.03f, 0.06f, 0.14f, 0.92f);
+        topBar.GetComponent<Image>().color = new Color(0.03f, 0.06f, 0.14f, 0.93f);
 
-        // Back button (small)
-        MakeBtn(topBar.transform, "<", new Vector2(8f * s, -20f * s), new Vector2(40f * s, 30f * s),
+        MakeTMPBtn(topBar.transform, "<", new Vector2(8f * s, -20f * s), new Vector2(38f * s, 28f * s),
             new Color(0.08f, 0.15f, 0.35f, 0.9f), new Color(0.75f, 0.80f, 0.95f, 1f), 14f * s,
             () => OnBackToMenu?.Invoke());
 
-        // Title
-        GameObject titleObj = new GameObject("PageTitle", typeof(RectTransform));
+        GameObject titleObj = new GameObject("Title", typeof(RectTransform));
         titleObj.transform.SetParent(topBar.transform, false);
-        TMP_Text titleTxt = titleObj.AddComponent<TextMeshProUGUI>();
-        titleTxt.text = "Button QA";
-        titleTxt.fontSize = 14f * s; titleTxt.color = new Color(0.35f, 0.70f, 1f, 1f);
-        titleTxt.alignment = TextAlignmentOptions.Center; titleTxt.fontStyle = FontStyles.Bold;
-        if (menuFont != null) titleTxt.font = menuFont;
-        RectTransform tr = titleObj.GetComponent<RectTransform>();
-        tr.anchorMin = tr.anchorMax = tr.pivot = new Vector2(0.5f, 0.5f);
-        tr.anchoredPosition = new Vector2(0, -20f * s); tr.sizeDelta = new Vector2(200f * s, 28f * s);
+        TMP_Text ttxt = titleObj.AddComponent<TextMeshProUGUI>();
+        ttxt.text = "Button Catalog"; ttxt.fontSize = 14f * s;
+        ttxt.color = new Color(0.35f, 0.70f, 1f, 1f); ttxt.alignment = TextAlignmentOptions.Center;
+        ttxt.fontStyle = FontStyles.Bold;
+        if (menuFont != null) ttxt.font = menuFont;
+        RectTransform tr2 = titleObj.GetComponent<RectTransform>();
+        tr2.anchorMin = tr2.anchorMax = tr2.pivot = new Vector2(0.5f, 0.5f);
+        tr2.anchoredPosition = new Vector2(0, -20f * s); tr2.sizeDelta = new Vector2(200f * s, 28f * s);
 
-        // Bottom panel - contains Q&A UI
-        GameObject bottomPanel = new GameObject("BottomPanel", typeof(RectTransform), typeof(Image));
-        bottomPanel.transform.SetParent(pagePanel.transform, false);
-        RectTransform bpr = bottomPanel.GetComponent<RectTransform>();
-        bpr.anchorMin = new Vector2(0, 0); bpr.anchorMax = new Vector2(1, 0.45f);
-        bpr.offsetMin = bpr.offsetMax = Vector2.zero;
-        bottomPanel.GetComponent<Image>().color = new Color(0.03f, 0.06f, 0.14f, 0.94f);
+        // Scrollable grid of button cards
+        GameObject scrollObj = new GameObject("ScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+        scrollObj.transform.SetParent(pagePanel.transform, false);
+        RectTransform sr = scrollObj.GetComponent<RectTransform>();
+        sr.anchorMin = new Vector2(0, 0); sr.anchorMax = new Vector2(1, 1);
+        sr.offsetMin = new Vector2(6f * s, 6f * s);
+        sr.offsetMax = new Vector2(-6f * s, -(46f * s));
+        scrollObj.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        ScrollRect scrollRect = scrollObj.GetComponent<ScrollRect>();
 
-        // Input row: input field + ask button
-        GameObject inputRow = new GameObject("InputRow", typeof(RectTransform));
-        inputRow.transform.SetParent(bottomPanel.transform, false);
-        RectTransform irr = inputRow.GetComponent<RectTransform>();
-        irr.anchorMin = new Vector2(0, 1); irr.anchorMax = new Vector2(1, 1);
-        irr.pivot = new Vector2(0.5f, 1);
-        irr.anchoredPosition = new Vector2(0, -8f * s); irr.sizeDelta = new Vector2(-16f * s, 38f * s);
+        GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+        viewport.transform.SetParent(scrollObj.transform, false);
+        RectTransform vp = viewport.GetComponent<RectTransform>();
+        vp.anchorMin = Vector2.zero; vp.anchorMax = Vector2.one; vp.sizeDelta = Vector2.zero;
+        viewport.GetComponent<Image>().color = new Color(0, 0, 0, 0);
 
-        // Input field
-        GameObject inputBg = new GameObject("InputBg", typeof(RectTransform), typeof(Image));
-        inputBg.transform.SetParent(inputRow.transform, false);
-        RectTransform ibr = inputBg.GetComponent<RectTransform>();
-        ibr.anchorMin = new Vector2(0, 0); ibr.anchorMax = new Vector2(1, 1);
-        ibr.offsetMin = Vector2.zero; ibr.offsetMax = new Vector2(-52f * s, 0);
-        inputBg.GetComponent<Image>().color = new Color(0.06f, 0.09f, 0.18f, 0.92f);
+        GameObject content = new GameObject("Content", typeof(RectTransform));
+        content.transform.SetParent(viewport.transform, false);
+        RectTransform cr = content.GetComponent<RectTransform>();
+        cr.anchorMin = new Vector2(0, 1); cr.anchorMax = new Vector2(1, 1);
+        cr.pivot = new Vector2(0.5f, 1); cr.anchoredPosition = Vector2.zero;
+        cr.sizeDelta = new Vector2(0, buttons.Count * (72f * s + 6f * s) + 6f * s);
 
-        InputField inputField = inputBg.AddComponent<InputField>();
-        inputField.lineType = InputField.LineType.SingleLine;
+        VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(4, 4, 4, 4); layout.spacing = 6f * s;
+        layout.childAlignment = TextAnchor.UpperCenter;
+        layout.childControlWidth = true; layout.childControlHeight = false;
+        layout.childForceExpandWidth = true; layout.childForceExpandHeight = false;
 
-        GameObject textObj = new GameObject("Text", typeof(RectTransform));
-        textObj.transform.SetParent(inputBg.transform, false);
-        Text inputText = textObj.AddComponent<Text>();
-        inputText.font = Font.CreateDynamicFontFromOSFont("Arial", 16);
-        inputText.fontSize = 14;
-        inputText.color = new Color(0.94f, 0.95f, 0.98f, 1f);
-        inputText.alignment = TextAnchor.MiddleLeft;
-        RectTransform txtr = textObj.GetComponent<RectTransform>();
-        txtr.anchorMin = Vector2.zero; txtr.anchorMax = Vector2.one;
-        txtr.offsetMin = new Vector2(6f * s, 0); txtr.offsetMax = new Vector2(-4f * s, 0);
-        inputField.textComponent = inputText;
+        scrollRect.viewport = vp; scrollRect.content = cr;
+        scrollRect.horizontal = false; scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
 
-        // Placeholder
-        GameObject phObj = new GameObject("Placeholder", typeof(RectTransform));
-        phObj.transform.SetParent(inputBg.transform, false);
-        Text phText = phObj.AddComponent<Text>();
-        phText.text = "Ask about buttons...";
-        phText.font = Font.CreateDynamicFontFromOSFont("Arial", 14);
-        phText.fontSize = 12;
-        phText.color = new Color(0.40f, 0.45f, 0.60f, 0.5f);
-        phText.alignment = TextAnchor.MiddleLeft;
-        RectTransform phr = phObj.GetComponent<RectTransform>();
-        phr.anchorMin = Vector2.zero; phr.anchorMax = Vector2.one;
-        phr.offsetMin = new Vector2(6f * s, 0); phr.offsetMax = new Vector2(-4f * s, 0);
-        inputField.placeholder = phText;
+        // Create button cards
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            int idx = i;
+            BtnInfo info = buttons[i];
 
-        // Ask button (compact, right side of input)
-        GameObject askBtn = new GameObject("AskBtn", typeof(RectTransform), typeof(Image), typeof(Button));
-        askBtn.transform.SetParent(inputRow.transform, false);
-        RectTransform abr = askBtn.GetComponent<RectTransform>();
-        abr.anchorMin = new Vector2(1, 0); abr.anchorMax = new Vector2(1, 1);
-        abr.pivot = new Vector2(1, 0.5f); abr.anchoredPosition = Vector2.zero;
-        abr.sizeDelta = new Vector2(46f * s, 0);
-        askBtn.GetComponent<Image>().color = new Color(0.10f, 0.30f, 0.55f, 0.9f);
+            GameObject card = new GameObject("BtnCard_" + i, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            card.transform.SetParent(content, false);
+            LayoutElement le = card.GetComponent<LayoutElement>();
+            le.minHeight = 72f * s; le.preferredHeight = 72f * s;
 
-        GameObject askLabel = new GameObject("Label", typeof(RectTransform));
-        askLabel.transform.SetParent(askBtn.transform, false);
-        Text askTxt = askLabel.AddComponent<Text>();
-        askTxt.text = "Ask";
-        askTxt.font = Font.CreateDynamicFontFromOSFont("Arial", 13);
-        askTxt.fontSize = 11;
-        askTxt.color = Color.white;
-        askTxt.alignment = TextAnchor.MiddleCenter;
-        RectTransform alr = askLabel.GetComponent<RectTransform>();
-        alr.anchorMin = Vector2.zero; alr.anchorMax = Vector2.one; alr.sizeDelta = Vector2.zero;
+            Image cardImg = card.GetComponent<Image>();
+            // Alternate colors like real panel buttons
+            Color[] colors = { new Color(0.12f, 0.25f, 0.45f, 0.88f), new Color(0.10f, 0.22f, 0.38f, 0.88f),
+                               new Color(0.08f, 0.35f, 0.25f, 0.85f), new Color(0.30f, 0.18f, 0.08f, 0.85f) };
+            cardImg.color = colors[i % colors.Length];
+            card.GetComponent<Button>().onClick.AddListener(() => ShowDetail(idx));
 
-        // Answer display
-        GameObject answerPanel = new GameObject("AnswerPanel", typeof(RectTransform), typeof(Image));
-        answerPanel.transform.SetParent(bottomPanel.transform, false);
-        RectTransform apr = answerPanel.GetComponent<RectTransform>();
-        apr.anchorMin = new Vector2(0, 0); apr.anchorMax = new Vector2(1, 1);
-        apr.offsetMin = new Vector2(6f * s, 6f * s);
-        apr.offsetMax = new Vector2(-6f * s, -(50f * s));
-        answerPanel.GetComponent<Image>().color = new Color(0.04f, 0.07f, 0.15f, 0.7f);
+            // Card name label
+            GameObject nameObj = new GameObject("Name", typeof(RectTransform));
+            nameObj.transform.SetParent(card.transform, false);
+            Text nameTxt = nameObj.AddComponent<Text>();
+            nameTxt.text = (i + 1) + ". " + info.name;
+            nameTxt.font = Font.CreateDynamicFontFromOSFont("Arial", 14);
+            nameTxt.fontSize = 15; nameTxt.color = Color.white;
+            nameTxt.alignment = TextAnchor.MiddleLeft; nameTxt.fontStyle = FontStyle.Bold;
+            RectTransform nr = nameObj.GetComponent<RectTransform>();
+            nr.anchorMin = Vector2.zero; nr.anchorMax = Vector2.one;
+            nr.offsetMin = new Vector2(14f * s, 38f * s); nr.offsetMax = new Vector2(-10f * s, -4f * s);
 
-        Text answerText = answerPanel.AddComponent<Text>();
-        answerText.font = Font.CreateDynamicFontFromOSFont("Arial", 13);
-        answerText.fontSize = 12;
-        answerText.color = new Color(0.85f, 0.88f, 0.93f, 1f);
-        answerText.alignment = TextAnchor.UpperLeft;
-        RectTransform atr = answerText.GetComponent<RectTransform>();
-        atr.anchorMin = Vector2.zero; atr.anchorMax = Vector2.one;
-        atr.offsetMin = new Vector2(8f * s, 8f * s);
-        atr.offsetMax = new Vector2(-8f * s, -8f * s);
+            // Brief preview
+            GameObject prevObj = new GameObject("Preview", typeof(RectTransform));
+            prevObj.transform.SetParent(card.transform, false);
+            Text prevTxt = prevObj.AddComponent<Text>();
+            string preview = info.answer;
+            if (preview.Length > 40) preview = preview.Substring(0, 40) + "...";
+            prevTxt.text = preview;
+            prevTxt.font = Font.CreateDynamicFontFromOSFont("Arial", 12);
+            prevTxt.fontSize = 11; prevTxt.color = new Color(0.7f, 0.75f, 0.85f, 1f);
+            prevTxt.alignment = TextAnchor.MiddleLeft;
+            RectTransform pvr = prevObj.GetComponent<RectTransform>();
+            pvr.anchorMin = Vector2.zero; pvr.anchorMax = Vector2.one;
+            pvr.offsetMin = new Vector2(14f * s, 4f * s); pvr.offsetMax = new Vector2(-10f * s, -34f * s);
+        }
 
-        // Create ButtonQA and wire up
-        buttonQA = gameObject.AddComponent<ButtonQA>();
-        buttonQA.questionInput = inputField;
-        buttonQA.answerText = answerText;
-        buttonQA.askButton = askBtn.GetComponent<Button>();
+        // Detail overlay (initially hidden)
+        detailOverlay = new GameObject("DetailOverlay", typeof(RectTransform), typeof(Image));
+        detailOverlay.transform.SetParent(pagePanel.transform, false);
+        detailOverlay.transform.SetAsLastSibling();
+        RectTransform dor = detailOverlay.GetComponent<RectTransform>();
+        dor.anchorMin = new Vector2(0.05f, 0.08f); dor.anchorMax = new Vector2(0.95f, 0.92f);
+        dor.offsetMin = dor.offsetMax = Vector2.zero;
+        detailOverlay.GetComponent<Image>().color = new Color(0.03f, 0.06f, 0.16f, 0.97f);
 
-        // Also trigger on Enter key
-        inputField.onEndEdit.AddListener((val) => {
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-                buttonQA.AskQuestion();
-        });
+        // Close button on overlay
+        MakeTMPBtn(detailOverlay.transform, "X", new Vector2(-12f * s, -12f * s), new Vector2(32f * s, 32f * s),
+            new Color(0.3f, 0.1f, 0.1f, 0.9f), Color.white, 16f * s,
+            () => detailOverlay.SetActive(false));
+        // Anchor close button to top-right
+        RectTransform cbr = detailOverlay.transform.GetChild(0).GetComponent<RectTransform>();
+        cbr.anchorMin = cbr.anchorMax = cbr.pivot = new Vector2(1, 1);
+
+        detailText = detailOverlay.AddComponent<Text>();
+        detailText.font = Font.CreateDynamicFontFromOSFont("Arial", 13);
+        detailText.fontSize = 13; detailText.color = new Color(0.88f, 0.9f, 0.95f, 1f);
+        detailText.alignment = TextAnchor.UpperLeft;
+        RectTransform dtr = detailText.GetComponent<RectTransform>();
+        dtr.anchorMin = Vector2.zero; dtr.anchorMax = Vector2.one;
+        dtr.offsetMin = new Vector2(16f * s, 16f * s); dtr.offsetMax = new Vector2(-16f * s, -50f * s);
+
+        detailOverlay.SetActive(false);
     }
 
-    void MakeBtn(Transform parent, string label, Vector2 pos, Vector2 size,
-        Color bg, Color tc, float fs, System.Action action)
+    void ShowDetail(int index)
     {
-        GameObject btn = new GameObject("Btn_", typeof(RectTransform), typeof(Image), typeof(Button));
+        if (index < 0 || index >= buttons.Count) return;
+        detailText.text = buttons[index].answer;
+        detailOverlay.SetActive(true);
+    }
+
+    void MakeTMPBtn(Transform parent, string label, Vector2 pos, Vector2 size, Color bg, Color tc, float fs, System.Action action)
+    {
+        GameObject btn = new GameObject("Btn", typeof(RectTransform), typeof(Image), typeof(Button));
         btn.transform.SetParent(parent, false);
         RectTransform br = btn.GetComponent<RectTransform>();
         br.anchorMin = br.anchorMax = br.pivot = new Vector2(0, 0.5f);
         br.anchoredPosition = pos; br.sizeDelta = size;
         btn.GetComponent<Image>().color = bg;
         btn.GetComponent<Button>().onClick.AddListener(() => action());
-
-        GameObject lbl = new GameObject("Label", typeof(RectTransform));
+        GameObject lbl = new GameObject("Lbl", typeof(RectTransform));
         lbl.transform.SetParent(btn.transform, false);
         TMP_Text txt = lbl.AddComponent<TextMeshProUGUI>();
         txt.text = label; txt.fontSize = fs; txt.color = tc;

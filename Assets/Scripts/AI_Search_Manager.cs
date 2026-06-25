@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -32,6 +32,7 @@ public class AI_Search_Manager : MonoBehaviour
 
     private const string PlaceholderApiKey = "sk-your-deepseek-api-key";
     private readonly List<OperationEntry> knowledgeEntries = new List<OperationEntry>();
+    private readonly List<OperationEntry> generalKnowledge = new List<OperationEntry>();
     private string loadedJsonData = "";
     private Coroutine pendingAskCoroutine;
     private UnityWebRequest activeRequest;
@@ -575,6 +576,20 @@ public class AI_Search_Manager : MonoBehaviour
             }
 
             Debug.Log($"知识库加载成功，共 {knowledgeEntries.Count} 条。");
+
+        TextAsset gkJson = Resources.Load<TextAsset>("PDG_Knowledge");
+        if (gkJson != null)
+        {
+            GeneralKBWrapper gkWrapper = JsonUtility.FromJson<GeneralKBWrapper>("{\"items\":" + gkJson.text + "}");
+            if (gkWrapper != null && gkWrapper.items != null)
+            {
+                foreach (var gk in gkWrapper.items)
+                {
+                    generalKnowledge.Add(new OperationEntry { command = gk.title, title = gk.title, keywords = gk.keywords, steps = string.IsNullOrWhiteSpace(gk.content) ? new string[0] : new string[] { gk.content } });
+                }
+                Debug.Log($"通用知识库加载成功，共 {generalKnowledge.Count} 条。");
+            }
+        }
         }
         catch (Exception e)
         {
@@ -797,7 +812,7 @@ public class AI_Search_Manager : MonoBehaviour
 
     private List<OperationEntry> FindAllMatches(string query)
     {
-        if (knowledgeEntries.Count == 0) return null;
+        if (knowledgeEntries.Count == 0 && generalKnowledge.Count == 0) return null;
 
         string normalizedQuery = NormalizeText(query);
         var scored = new List<ScoredEntry>();
@@ -912,6 +927,19 @@ public class AI_Search_Manager : MonoBehaviour
 
         return bestScore >= 1 ? best : null;
     }
+
+    private int ScoreGeneralEntry(string query, OperationEntry entry)
+    {
+        int score = 0;
+        string searchable = NormalizeText((entry.title ?? "") + " " + string.Join(" ", entry.keywords ?? new string[0]) + " " + string.Join(" ", entry.steps ?? new string[0]));
+        if (!string.IsNullOrWhiteSpace(entry.title) && (query.Contains(NormalizeText(entry.title)) || NormalizeText(entry.title).Contains(query)))
+            score += 4;
+        foreach (string token in SplitTokens(query))
+            if (token.Length >= 2 && searchable.Contains(token)) score += 1;
+        return score;
+    }
+
+    private string[] SplitContent(string content) { return string.IsNullOrWhiteSpace(content) ? new string[0] : new string[] { content }; }
 
     private int ScoreEntry(string query, OperationEntry entry)
     {
