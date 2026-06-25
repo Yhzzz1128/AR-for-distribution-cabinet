@@ -12,30 +12,34 @@ public class MainMenuController : MonoBehaviour
     [Header("Splash")]
     public float splashDuration = 2.5f;
     public string appTitle = "PDG AR System";
-    public string appSubtitle = "Power Distribution Cabinet Â· Inspection & Guide";
+    public string appSubtitle = "Power Distribution Cabinet ¡¤ Inspection & Guide";
     public Color splashBgColor = new Color(0.02f, 0.04f, 0.10f, 1f);
     public Color accentColor = new Color(0.35f, 0.70f, 1f, 1f);
 
     [Header("Main Menu")]
     public string menuTitle = "PDG AR System";
-    public string menuDesc = "Smart power distribution cabinet assistant\nAR inspection Â· fault diagnosis Â· knowledge base";
+    public string menuDesc = "Smart power distribution cabinet assistant\nAR inspection ¡¤ fault diagnosis ¡¤ knowledge base";
     public string btnARText = "AR Inspection";
     public string btnQAText = "Knowledge Base";
     public string btnButtonQAText = "Button QA";
+    public string btnFaultChallengeText = "Fault Challenge";
     public Color menuBgColor = new Color(0.03f, 0.06f, 0.14f, 0.96f);
     public Color buttonColor = new Color(0.10f, 0.30f, 0.55f, 0.90f);
     public Color buttonTextColor = new Color(0.90f, 0.93f, 0.98f, 1f);
+    public Color faultButtonColor = new Color(0.32f, 0.18f, 0.46f, 0.90f);
+    public Color faultButtonTextColor = new Color(1f, 0.95f, 0.82f, 1f);
 
     private Canvas canvas;
     private GameObject splashPanel;
     private GameObject menuPanel;
     private QAPageController qaPage;
     private ButtonQAPageController buttonQAPage;
+    private FaultChallengePageController faultChallengePage;
+    private FaultChallengeManager faultChallengeManager;
     private bool menuShown = false;
 
     void Awake()
     {
-        // Auto-load Chinese font from AI_Search_Manager
         if (menuFont == null)
         {
             var searchMgr = FindObjectOfType<AI_Search_Manager>();
@@ -46,7 +50,6 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
-        // Ensure EventSystem exists (required for UI clicks)
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject es = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
@@ -76,8 +79,6 @@ public class MainMenuController : MonoBehaviour
 
     void DisableARExperience()
     {
-        // Only disable AR interaction; keep search UI active so AI_Search_Manager initializes properly
-        // The main menu overlay is full-screen so the search UI won't be visible anyway
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = false;
 
@@ -91,12 +92,9 @@ public class MainMenuController : MonoBehaviour
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = true;
 
-        // AI_Search_Manager and its UI were never disabled, no need to re-enable
-        // Just ensure they are active
         var searchMgr = FindObjectOfType<AI_Search_Manager>();
         if (searchMgr != null) searchMgr.enabled = true;
 
-        // Create back button on AR page
         if (arBackButton == null)
         {
             float s = GetScale();
@@ -107,7 +105,7 @@ public class MainMenuController : MonoBehaviour
             br.anchorMin = br.anchorMax = br.pivot = new Vector2(0, 0.5f);
             float topY = -30f * s;
             br.anchoredPosition = new Vector2(12f * s, Screen.height - Mathf.Abs(topY));
-            br.anchoredPosition = new Vector2(12f * s, -30f * s); // top-left corner area
+            br.anchoredPosition = new Vector2(12f * s, -30f * s);
             br.sizeDelta = new Vector2(70f * s, 36f * s);
             arBackButton.GetComponent<Image>().color = new Color(0.08f, 0.15f, 0.35f, 0.9f);
             arBackButton.GetComponent<Button>().onClick.AddListener(ReturnToMenu);
@@ -126,7 +124,6 @@ public class MainMenuController : MonoBehaviour
         arBackButton.SetActive(true);
     }
 
-    // ===== Splash =====
     void CreateSplashPanel()
     {
         float s = GetScale();
@@ -167,7 +164,6 @@ public class MainMenuController : MonoBehaviour
         yield return StartCoroutine(ShowMainMenu());
     }
 
-    // ===== Main Menu =====
     IEnumerator ShowMainMenu()
     {
         if (menuShown) yield break;
@@ -178,6 +174,35 @@ public class MainMenuController : MonoBehaviour
         cg.alpha = 0f;
         for (float e = 0f; e < 0.5f; e += Time.deltaTime) { cg.alpha = e / 0.5f; yield return null; }
         cg.alpha = 1f;
+    }
+
+    void CreateMenuPanel()
+    {
+        float s = GetScale();
+        menuPanel = MakeFullscreenPanel("MainMenuPanel", menuBgColor);
+
+        MakeMenuTopTitle(menuTitle, s);
+
+        GameObject content = new GameObject("MenuContent", typeof(RectTransform));
+        content.transform.SetParent(menuPanel.transform, false);
+        RectTransform cr = content.GetComponent<RectTransform>();
+        SetAnchorCenter(cr, new Vector2(0, 10f * s), new Vector2(320f * s, 480f * s));
+
+        GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
+        div.transform.SetParent(content.transform, false);
+        RectTransform dr = div.GetComponent<RectTransform>();
+        SetAnchorTop(dr, new Vector2(0, -44f * s), new Vector2(220f * s, 1f));
+        div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
+
+        float spacing = 74f * s;
+        float startY = -48f * s;
+
+        MakeMenuButton(content.transform, btnARText, 0, startY, 240f * s, 52f * s, s, OnARClicked, buttonColor, buttonTextColor);
+        MakeMenuButton(content.transform, btnQAText, 0, startY - spacing, 200f * s, 42f * s, s, OnQAClicked, buttonColor, buttonTextColor);
+        MakeMenuButton(content.transform, btnButtonQAText, 0, startY - spacing * 2f, 200f * s, 42f * s, s, OnButtonQAClicked, buttonColor, buttonTextColor);
+        MakeMenuButton(content.transform, btnFaultChallengeText, 0, startY - spacing * 3f, 200f * s, 42f * s, s, OnFaultChallengeClicked, faultButtonColor, faultButtonTextColor);
+
+        MakeFooterDesc(menuDesc, s);
     }
 
     void MakeMenuTopTitle(string title, float s)
@@ -196,39 +221,6 @@ public class MainMenuController : MonoBehaviour
         tr.pivot = new Vector2(0.5f, 1f);
         tr.anchoredPosition = new Vector2(0, -16f * s);
         tr.sizeDelta = new Vector2(320f * s, 44f * s);
-    }
-    void CreateMenuPanel()
-    {
-        float s = GetScale();
-        menuPanel = MakeFullscreenPanel("MainMenuPanel", menuBgColor);
-
-        // Title at the very top of the panel
-        MakeMenuTopTitle(menuTitle, s);
-
-        // Centered content container
-        GameObject content = new GameObject("MenuContent", typeof(RectTransform));
-        content.transform.SetParent(menuPanel.transform, false);
-        RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, new Vector2(0, 30f * s), new Vector2(300f * s, 300f * s));
-
-        // Divider
-        GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
-        div.transform.SetParent(content.transform, false);
-        RectTransform dr = div.GetComponent<RectTransform>();
-        SetAnchorTop(dr, new Vector2(0, -44f * s), new Vector2(220f * s, 1f));
-        div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
-
-        // Button 1: AR Inspection
-        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, OnARClicked);
-
-        // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -182f * s, 200f * s, 42f * s, s, OnQAClicked);
-
-        // Button 3: Smart QA
-        MakeMenuButton(content.transform, btnButtonQAText, 0, -234f * s, 200f * s, 42f * s, s, OnButtonQAClicked);
-
-        // Footer description at bottom of page
-        MakeFooterDesc(menuDesc, s);
     }
 
     void MakeFooterDesc(string text, float s)
@@ -249,13 +241,13 @@ public class MainMenuController : MonoBehaviour
         fr.sizeDelta = new Vector2(300f * s, 40f * s);
     }
 
-    void MakeMenuButton(Transform parent, string label, float x, float y, float w, float h, float s, UnityEngine.Events.UnityAction action)
+    void MakeMenuButton(Transform parent, string label, float x, float y, float w, float h, float s, UnityEngine.Events.UnityAction action, Color bgColor, Color textColor)
     {
         GameObject btnObj = new GameObject("Btn_" + label.Replace(" ", ""), typeof(RectTransform), typeof(Image), typeof(Button));
         btnObj.transform.SetParent(parent, false);
         RectTransform br = btnObj.GetComponent<RectTransform>();
         SetAnchorTop(br, new Vector2(x, y), new Vector2(w, h));
-        btnObj.GetComponent<Image>().color = buttonColor;
+        btnObj.GetComponent<Image>().color = bgColor;
         btnObj.GetComponent<Button>().onClick.AddListener(action);
 
         GameObject lbl = new GameObject("Label", typeof(RectTransform));
@@ -263,7 +255,7 @@ public class MainMenuController : MonoBehaviour
         TMP_Text txt = lbl.AddComponent<TextMeshProUGUI>();
         txt.text = label;
         txt.fontSize = 16f * s;
-        txt.color = buttonTextColor;
+        txt.color = textColor;
         txt.alignment = TextAlignmentOptions.Center;
         txt.fontStyle = FontStyles.Bold;
         if (menuFont != null) txt.font = menuFont;
@@ -271,7 +263,6 @@ public class MainMenuController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 
-    // ===== Transitions =====
     IEnumerator EnterARMode()
     {
         yield return FadeOutPanel(menuPanel);
@@ -309,6 +300,28 @@ public class MainMenuController : MonoBehaviour
         buttonQAPage.Show();
     }
 
+    IEnumerator EnterFaultChallengeMode()
+    {
+        yield return FadeOutPanel(menuPanel);
+        menuPanel.SetActive(false);
+
+        if (faultChallengePage == null)
+        {
+            faultChallengePage = gameObject.AddComponent<FaultChallengePageController>();
+            faultChallengePage.menuFont = menuFont;
+            faultChallengePage.canvas = canvas;
+            faultChallengePage.OnBackToMenu += OnBackFromFaultChallengePage;
+        }
+
+        if (faultChallengeManager == null)
+        {
+            faultChallengeManager = FindObjectOfType<FaultChallengeManager>();
+        }
+
+        faultChallengePage.Show();
+        faultChallengePage.ConfigureChallengeManager(faultChallengeManager);
+    }
+
     void OnBackFromQAPage()
     {
         if (qaPage != null) qaPage.Hide();
@@ -318,6 +331,12 @@ public class MainMenuController : MonoBehaviour
     void OnBackFromButtonQAPage()
     {
         if (buttonQAPage != null) buttonQAPage.Hide();
+        ShowMenuWithFade();
+    }
+
+    void OnBackFromFaultChallengePage()
+    {
+        if (faultChallengePage != null) faultChallengePage.Hide();
         ShowMenuWithFade();
     }
 
@@ -332,10 +351,10 @@ public class MainMenuController : MonoBehaviour
     void OnARClicked()      { Debug.Log("[MainMenu] AR Inspection clicked"); StartCoroutine(EnterARMode()); }
     void OnQAClicked()      { Debug.Log("[MainMenu] Knowledge Base clicked"); StartCoroutine(EnterQAMode()); }
     void OnButtonQAClicked(){ Debug.Log("[MainMenu] Button QA clicked"); StartCoroutine(EnterButtonQAMode()); }
+    void OnFaultChallengeClicked() { Debug.Log("[MainMenu] Fault Challenge clicked"); StartCoroutine(EnterFaultChallengeMode()); }
 
     public void ReturnToMenu()
     {
-        // Disable AR interaction, keep search UI alive
         var interactor = FindObjectOfType<ARInteractor>();
         if (interactor != null) interactor.enabled = false;
 
@@ -362,7 +381,6 @@ public class MainMenuController : MonoBehaviour
         cg.alpha = 1f;
     }
 
-    // ===== Helpers =====
     float GetScale() { return Mathf.Clamp(Screen.width / 540f, 1f, 2f); }
 
     GameObject MakeFullscreenPanel(string name, Color bgColor)
@@ -417,7 +435,6 @@ public class MainMenuController : MonoBehaviour
         r.offsetMin = offsetMin; r.offsetMax = offsetMax;
     }
 
-    // Auto-init
     public static class MainMenuAutoInit
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -429,6 +446,8 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
+
 
 
 
