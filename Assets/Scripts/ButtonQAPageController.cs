@@ -11,7 +11,7 @@ public class ButtonQAPageController : MonoBehaviour
 
     private GameObject pagePanel;
     private GameObject detailOverlay;
-    private Text detailText;
+    private TextMeshProUGUI detailText;
     private Font fallbackFont;
 
     private class BtnInfo { public string name; public string answer; public string[] keywords; }
@@ -131,11 +131,11 @@ public class ButtonQAPageController : MonoBehaviour
         }
 
         if (detailOverlay == null) { Debug.LogError("[ButtonQA] detailOverlay is null"); return; }
-        detailText = detailOverlay.AddComponent<Text>();
-        if (detailText == null) { Debug.LogError("[ButtonQA] detailText AddComponent returned null"); return; }
-        if (fallbackFont != null) detailText.font = fallbackFont;
+        detailText = detailOverlay.AddComponent<TextMeshProUGUI>();
+        if (detailText == null) { Debug.LogError("[ButtonQA] detailText TMP AddComponent returned null"); return; }
+        if (menuFont != null) detailText.font = menuFont;
         detailText.fontSize = 13; detailText.color = new Color(0.88f, 0.9f, 0.95f, 1f);
-        detailText.alignment = TextAnchor.UpperLeft;
+        detailText.alignment = TextAlignmentOptions.TopLeft;
         RectTransform dtr = detailText.GetComponent<RectTransform>();
         dtr.anchorMin = Vector2.zero; dtr.anchorMax = Vector2.one;
         dtr.offsetMin = new Vector2(16f * s, 16f * s); dtr.offsetMax = new Vector2(-16f * s, -50f * s);
@@ -170,12 +170,12 @@ public class ButtonQAPageController : MonoBehaviour
 
             // Name label (centered in card)
             GameObject nameObj = MakeRect("Name", card.transform);
-            Text nameTxt = nameObj.AddComponent<Text>();
+            TextMeshProUGUI nameTxt = nameObj.AddComponent<TextMeshProUGUI>();
             nameTxt.text = (info.name ?? "Unknown");
-            if (fallbackFont != null) nameTxt.font = fallbackFont;
+            if (menuFont != null) nameTxt.font = menuFont;
             nameTxt.fontSize = 14; nameTxt.color = Color.white;
-            nameTxt.alignment = TextAnchor.MiddleCenter; nameTxt.fontStyle = FontStyle.Bold;
-            nameTxt.horizontalOverflow = HorizontalWrapMode.Overflow;
+            nameTxt.alignment = TextAlignmentOptions.Center; nameTxt.fontStyle = FontStyles.Bold;
+            nameTxt.enableWordWrapping = false;
             RectTransform nr = nameObj.GetComponent<RectTransform>();
             nr.anchorMin = Vector2.zero; nr.anchorMax = Vector2.one; nr.offsetMin = nr.offsetMax = Vector2.zero;
         }
