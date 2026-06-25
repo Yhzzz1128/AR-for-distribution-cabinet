@@ -21,6 +21,7 @@ public class MainMenuController : MonoBehaviour
     public string menuDesc = "Smart power distribution cabinet assistant\nAR inspection · fault diagnosis · knowledge base";
     public string btnARText = "AR Inspection";
     public string btnQAText = "Knowledge Base";
+    public string btnSmartQAText = "Smart QA";
     public Color menuBgColor = new Color(0.03f, 0.06f, 0.14f, 0.96f);
     public Color buttonColor = new Color(0.10f, 0.30f, 0.55f, 0.90f);
     public Color buttonTextColor = new Color(0.90f, 0.93f, 0.98f, 1f);
@@ -29,6 +30,7 @@ public class MainMenuController : MonoBehaviour
     private GameObject splashPanel;
     private GameObject menuPanel;
     private QAPageController qaPage;
+    private SmartQAPageController smartQAPage;
     private bool menuShown = false;
 
     void Awake()
@@ -197,7 +199,7 @@ public class MainMenuController : MonoBehaviour
         GameObject content = new GameObject("MenuContent", typeof(RectTransform));
         content.transform.SetParent(menuPanel.transform, false);
         RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, new Vector2(0, 20f * s), new Vector2(340f * s, 200f * s));
+        SetAnchorCenter(cr, new Vector2(0, 30f * s), new Vector2(340f * s, 280f * s));
 
         // Divider
         GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
@@ -211,6 +213,9 @@ public class MainMenuController : MonoBehaviour
 
         // Button 2: Knowledge Base
         MakeMenuButton(content.transform, btnQAText, 0, -130f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterQAMode()));
+
+        // Button 3: Smart QA
+        MakeMenuButton(content.transform, btnSmartQAText, 0, -196f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterSmartQAMode()));
 
         // Footer description at bottom of page
         MakeFooterDesc(menuDesc, s);
@@ -279,9 +284,35 @@ public class MainMenuController : MonoBehaviour
         qaPage.Show();
     }
 
+    IEnumerator EnterSmartQAMode()
+    {
+        yield return FadeOutPanel(menuPanel);
+        menuPanel.SetActive(false);
+
+        if (smartQAPage == null)
+        {
+            smartQAPage = gameObject.AddComponent<SmartQAPageController>();
+            smartQAPage.menuFont = menuFont;
+            smartQAPage.canvas = canvas;
+            smartQAPage.OnBackToMenu += OnBackFromSmartQAPage;
+        }
+        smartQAPage.Show();
+    }
+
     void OnBackFromQAPage()
     {
         if (qaPage != null) qaPage.Hide();
+        ShowMenuWithFade();
+    }
+
+    void OnBackFromSmartQAPage()
+    {
+        if (smartQAPage != null) smartQAPage.Hide();
+        ShowMenuWithFade();
+    }
+
+    void ShowMenuWithFade()
+    {
         menuPanel.SetActive(true);
         CanvasGroup cg = menuPanel.GetComponent<CanvasGroup>();
         if (cg == null) cg = menuPanel.AddComponent<CanvasGroup>();
@@ -384,6 +415,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
 
 
