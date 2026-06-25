@@ -85,8 +85,8 @@ public class ButtonQAPageController : MonoBehaviour
         AnchorTop(content, 0, 0);
 
         var vlg = content.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(6, 6, 6, 6); vlg.spacing = 4f * s;
-        vlg.childAlignment = TextAnchor.UpperCenter;
+        vlg.padding = new RectOffset(6, 6, 6, 6); vlg.spacing = 12f * s;
+        vlg.childAlignment = TextAnchor.MiddleCenter;
         vlg.childControlWidth = false; vlg.childControlHeight = false;
         vlg.childForceExpandWidth = false; vlg.childForceExpandHeight = false;
         content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -113,17 +113,17 @@ public class ButtonQAPageController : MonoBehaviour
         // Row colors matching real button colors
         Color[][] rowColors = {
             new Color[] { // Row 1: 电源指示, 开阀运行, 关阀运行, 开到位, 关到位
-                new Color(0.1f, 0.7f, 0.2f, 0.95f),  // green
-                new Color(0.1f, 0.65f, 0.22f, 0.95f), // green
-                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
-                new Color(0.1f, 0.7f, 0.2f, 0.95f),   // green
-                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
+                new Color(0.85f, 0.88f, 0.92f, 0.95f),  // white
+                new Color(0.10f, 0.70f, 0.22f, 0.95f),  // green
+                new Color(0.82f, 0.20f, 0.12f, 0.95f),  // red
+                new Color(0.18f, 0.45f, 0.75f, 0.95f),  // blue
+                new Color(0.82f, 0.72f, 0.10f, 0.95f),  // yellow
             },
             new Color[] { // Row 2: 就地开阀, 就地停止, 就地关阀, 就地/停/远程
-                new Color(0.1f, 0.7f, 0.2f, 0.95f),   // green
-                new Color(0.9f, 0.55f, 0.1f, 0.95f),  // orange
-                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
-                new Color(0.15f, 0.45f, 0.75f, 0.95f), // blue
+                new Color(0.10f, 0.70f, 0.22f, 0.95f),  // green
+                new Color(0.82f, 0.20f, 0.12f, 0.95f),  // red
+                new Color(0.82f, 0.72f, 0.10f, 0.95f),  // yellow
+                new Color(0.85f, 0.88f, 0.92f, 0.95f),  // white
             }
         };
 
@@ -133,7 +133,7 @@ public class ButtonQAPageController : MonoBehaviour
             var rle = rowObj.AddComponent<LayoutElement>();
             rle.minHeight = 80f * s; rle.preferredHeight = 80f * s;
             var hlg = rowObj.AddComponent<HorizontalLayoutGroup>();
-            hlg.padding = new RectOffset(4, 4, 0, 0); hlg.spacing = 4f * s;
+            hlg.padding = new RectOffset(6, 6, 4, 4); hlg.spacing = 8f * s;
             hlg.childAlignment = TextAnchor.MiddleCenter;
             hlg.childControlWidth = false; hlg.childControlHeight = false;
             hlg.childForceExpandWidth = false; hlg.childForceExpandHeight = false;
