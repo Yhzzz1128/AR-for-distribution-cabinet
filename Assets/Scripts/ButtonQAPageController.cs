@@ -62,7 +62,7 @@ public class ButtonQAPageController : MonoBehaviour
         RectTransform pr = pagePanel.GetComponent<RectTransform>();
         pr.anchorMin = Vector2.zero; pr.anchorMax = Vector2.one;
         pr.offsetMin = pr.offsetMax = Vector2.zero;
-        pagePanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
+        pagePanel.GetComponent<Image>().color = new Color(0.03f, 0.05f, 0.12f, 1f);
 
         // Top bar
         GameObject topBar = new GameObject("TopBar", typeof(RectTransform), typeof(Image));
@@ -180,8 +180,11 @@ public class ButtonQAPageController : MonoBehaviour
             new Color(0.3f, 0.1f, 0.1f, 0.9f), Color.white, 16f * s,
             () => detailOverlay.SetActive(false));
         // Anchor close button to top-right
-        RectTransform cbr = detailOverlay.transform.GetChild(0).GetComponent<RectTransform>();
-        cbr.anchorMin = cbr.anchorMax = cbr.pivot = new Vector2(1, 1);
+        if (detailOverlay.transform.childCount > 0)
+        {
+            RectTransform cbr = detailOverlay.transform.GetChild(0).GetComponent<RectTransform>();
+            if (cbr != null) cbr.anchorMin = cbr.anchorMax = cbr.pivot = new Vector2(1, 1);
+        }
 
         detailText = detailOverlay.AddComponent<Text>();
         detailText.font = Font.CreateDynamicFontFromOSFont("Arial", 13);
@@ -197,7 +200,11 @@ public class ButtonQAPageController : MonoBehaviour
     void ShowDetail(int index)
     {
         if (index < 0 || index >= buttons.Count) return;
-        detailText.text = buttons[index].answer;
+        if (detailText == null) { Debug.LogError("[ButtonQA] detailText is null"); return; }
+        if (detailOverlay == null) { Debug.LogError("[ButtonQA] detailOverlay is null"); return; }
+        var info = buttons[index];
+        if (info == null || info.answer == null) return;
+        detailText.text = info.answer;
         detailOverlay.SetActive(true);
     }
 
