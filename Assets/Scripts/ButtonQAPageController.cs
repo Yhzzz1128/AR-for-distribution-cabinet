@@ -128,7 +128,7 @@ public class ButtonQAPageController : MonoBehaviour
             BtnInfo info = buttons[i];
 
             GameObject card = new GameObject("BtnCard_" + i, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            card.transform.SetParent(content, false);
+            card.transform.SetParent(content.transform, false);
             LayoutElement le = card.GetComponent<LayoutElement>();
             le.minHeight = 72f * s; le.preferredHeight = 72f * s;
 
