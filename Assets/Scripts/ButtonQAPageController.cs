@@ -87,8 +87,8 @@ public class ButtonQAPageController : MonoBehaviour
         var vlg = content.AddComponent<VerticalLayoutGroup>();
         vlg.padding = new RectOffset(6, 6, 6, 6); vlg.spacing = 4f * s;
         vlg.childAlignment = TextAnchor.UpperCenter;
-        vlg.childControlWidth = true; vlg.childControlHeight = false;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
+        vlg.childControlWidth = false; vlg.childControlHeight = false;
+        vlg.childForceExpandWidth = false; vlg.childForceExpandHeight = false;
         content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         scrollRect.viewport = vp.GetComponent<RectTransform>();
@@ -105,23 +105,73 @@ public class ButtonQAPageController : MonoBehaviour
             new Color(0.15f, 0.55f, 0.25f, 0.92f)
         };
 
-        for (int i = 0; i < buttons.Count; i++)
+        // Two-row grid layout
+        int[] row1Idx = { 0, 8, 7, 6, 5 };
+        int[] row2Idx = { 2, 4, 3, 1 };
+        int[][] rows = { row1Idx, row2Idx };
+
+        // Row colors matching real button colors
+        Color[][] rowColors = {
+            new Color[] { // Row 1: 电源指示, 开阀运行, 关阀运行, 开到位, 关到位
+                new Color(0.1f, 0.7f, 0.2f, 0.95f),  // green
+                new Color(0.1f, 0.65f, 0.22f, 0.95f), // green
+                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
+                new Color(0.1f, 0.7f, 0.2f, 0.95f),   // green
+                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
+            },
+            new Color[] { // Row 2: 就地开阀, 就地停止, 就地关阀, 就地/停/远程
+                new Color(0.1f, 0.7f, 0.2f, 0.95f),   // green
+                new Color(0.9f, 0.55f, 0.1f, 0.95f),  // orange
+                new Color(0.8f, 0.2f, 0.1f, 0.95f),   // red
+                new Color(0.15f, 0.45f, 0.75f, 0.95f), // blue
+            }
+        };
+
+        for (int r = 0; r < rows.Length; r++)
         {
-            int idx = i; var info = buttons[i];
+            GameObject rowObj = MakeGO("Row" + r, content.transform);
+            var rle = rowObj.AddComponent<LayoutElement>();
+            rle.minHeight = 80f * s; rle.preferredHeight = 80f * s;
+            var hlg = rowObj.AddComponent<HorizontalLayoutGroup>();
+            hlg.padding = new RectOffset(4, 4, 0, 0); hlg.spacing = 4f * s;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = false; hlg.childControlHeight = false;
+            hlg.childForceExpandWidth = false; hlg.childForceExpandHeight = false;
 
-            GameObject card = MakeGO("Card" + i, content.transform);
-            card.AddComponent<Image>().color = i < colors.Length ? colors[i] : Color.gray;
-            card.AddComponent<Button>().onClick.AddListener(() => ShowDetail(idx));
-            var le = card.AddComponent<LayoutElement>();
-            le.minHeight = 40f * s; le.preferredHeight = 40f * s;
+            for (int c = 0; c < rows[r].Length; c++)
+            {
+                int idx = rows[r][c];
+                var info = buttons[idx];
 
-            GameObject label = MakeGO("Lbl", card.transform);
-            var lt = label.AddComponent<TextMeshProUGUI>();
-            lt.text = (i + 1) + ". " + info.name;
-            lt.fontSize = 13f * s; lt.color = Color.white;
-            lt.alignment = TextAlignmentOptions.Center; lt.fontStyle = FontStyles.Bold;
-            if (menuFont != null) lt.font = menuFont;
-            Stretch(label);
+                GameObject card = MakeGO("Card" + idx, rowObj.transform);
+                card.AddComponent<Image>().color = rowColors[r][c];
+                card.AddComponent<Button>().onClick.AddListener(() => {
+                    int i = idx;
+                    ShowDetail(i);
+                });
+                var le = card.AddComponent<LayoutElement>();
+                le.minWidth = 78f * s; le.preferredWidth = 78f * s;
+                le.minHeight = 78f * s; le.preferredHeight = 78f * s;
+
+                // Number in center
+                GameObject label = MakeGO("Lbl", card.transform);
+                var lt = label.AddComponent<TextMeshProUGUI>();
+                lt.text = (idx + 1).ToString();
+                lt.fontSize = 22f * s; lt.color = Color.white;
+                lt.alignment = TextAlignmentOptions.Center; lt.fontStyle = FontStyles.Bold;
+                if (menuFont != null) lt.font = menuFont;
+                AnchorPos(label, 0.5f, 0.65f, 0.5f, 0.65f, 0, 0, 60f * s, 30f * s);
+
+                // Short name below number
+                GameObject nl = MakeGO("Name", card.transform);
+                var nt = nl.AddComponent<TextMeshProUGUI>();
+                string sn = info.name.Length > 8 ? info.name.Substring(0, 7) + "." : info.name;
+                nt.text = sn;
+                nt.fontSize = 8f * s; nt.color = new Color(0.85f, 0.9f, 1f, 1f);
+                nt.alignment = TextAlignmentOptions.Center;
+                if (menuFont != null) nt.font = menuFont;
+                AnchorPos(nl, 0.5f, 0.25f, 0.5f, 0.25f, 0, 0, 68f * s, 14f * s);
+            }
         }
 
         // === Detail overlay ===
