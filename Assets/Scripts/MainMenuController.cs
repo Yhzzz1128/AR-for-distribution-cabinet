@@ -46,12 +46,22 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+        // Ensure EventSystem exists (required for UI clicks)
+        if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        {
+            GameObject es = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
+            Debug.Log("[MainMenu] Created missing EventSystem");
+        }
         canvas = FindObjectOfType<Canvas>();
+        if (canvas != null && canvas.GetComponent<GraphicRaycaster>() == null)
+            canvas.gameObject.AddComponent<GraphicRaycaster>();
         if (canvas == null)
         {
             GameObject canvasObj = new GameObject("UICanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = canvasObj.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            if (canvasObj.GetComponent<GraphicRaycaster>() == null)
+                canvasObj.AddComponent<GraphicRaycaster>();
             CanvasScaler scaler = canvasObj.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(540, 960);
@@ -209,13 +219,13 @@ public class MainMenuController : MonoBehaviour
         div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
 
         // Button 1: AR Inspection
-        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterARMode()));
+        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, () => { Debug.Log("[MainMenu] AR Inspection clicked"); StartCoroutine(EnterARMode()); });
 
         // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -182f * s, 200f * s, 42f * s, s, () => StartCoroutine(EnterQAMode()));
+        MakeMenuButton(content.transform, btnQAText, 0, -182f * s, 200f * s, 42f * s, s, () => { Debug.Log("[MainMenu] Knowledge Base clicked"); StartCoroutine(EnterQAMode()); });
 
         // Button 3: Smart QA
-        MakeMenuButton(content.transform, btnButtonQAText, 0, -234f * s, 200f * s, 42f * s, s, () => StartCoroutine(EnterButtonQAMode()));
+        MakeMenuButton(content.transform, btnButtonQAText, 0, -234f * s, 200f * s, 42f * s, s, () => { Debug.Log("[MainMenu] Button QA clicked"); StartCoroutine(EnterButtonQAMode()); });
 
         // Footer description at bottom of page
         MakeFooterDesc(menuDesc, s);
