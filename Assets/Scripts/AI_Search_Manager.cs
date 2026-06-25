@@ -1493,6 +1493,10 @@ public class AI_Search_Manager : MonoBehaviour
     }
 
     [Serializable]
+    private class GeneralKBEntry { public string title; public string category; public string[] keywords; public string content; }
+    [Serializable]
+    private class GeneralKBWrapper { public GeneralKBEntry[] items; }
+    [Serializable]
     public class OperationEntry
     {
         public string command;
