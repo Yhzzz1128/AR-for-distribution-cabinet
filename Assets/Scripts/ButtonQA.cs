@@ -3,7 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SmartQA : MonoBehaviour
+public class ButtonQA : MonoBehaviour
 {
     [Header("Q&A UI")]
     public InputField questionInput;
@@ -46,7 +46,7 @@ public class SmartQA : MonoBehaviour
         knowledgeBase.Clear();
 
         // Try loading from Resources JSON first
-        TextAsset json = Resources.Load<TextAsset>("SmartQA_Data");
+        TextAsset json = Resources.Load<TextAsset>("ButtonQA_Data");
         if (json != null)
         {
             string wrapped = json.text.Trim().StartsWith("[") ? "{\"items\":" + json.text + "}" : json.text;
@@ -54,13 +54,13 @@ public class SmartQA : MonoBehaviour
             if (wrapper != null && wrapper.items != null)
             {
                 knowledgeBase.AddRange(wrapper.items);
-                Debug.Log("[SmartQA] Loaded " + knowledgeBase.Count + " entries from Resources");
+                Debug.Log("[ButtonQA] Loaded " + knowledgeBase.Count + " entries from Resources");
                 return;
             }
         }
 
         // Fallback: inline knowledge
-        Debug.LogWarning("[SmartQA] SmartQA_Data.json not found, using fallback inline data");
+        Debug.LogWarning("[ButtonQA] ButtonQA_Data.json not found, using fallback inline data");
         BuildFallbackKnowledge();
     }
 
@@ -95,7 +95,7 @@ public class SmartQA : MonoBehaviour
     {
         if (questionInput == null || answerText == null)
         {
-            Debug.LogError("[SmartQA] UI not fully bound - check Inspector");
+            Debug.LogError("[ButtonQA] UI not fully bound - check Inspector");
             return;
         }
 
@@ -241,3 +241,4 @@ public class SmartQA : MonoBehaviour
             .Replace("!", "").Replace("/", "").Replace(":", "").ToLower();
     }
 }
+
