@@ -199,7 +199,7 @@ public class MainMenuController : MonoBehaviour
         GameObject content = new GameObject("MenuContent", typeof(RectTransform));
         content.transform.SetParent(menuPanel.transform, false);
         RectTransform cr = content.GetComponent<RectTransform>();
-        SetAnchorCenter(cr, new Vector2(0, 30f * s), new Vector2(340f * s, 280f * s));
+        SetAnchorCenter(cr, new Vector2(0, 30f * s), new Vector2(280f * s, 260f * s));
 
         // Divider
         GameObject div = new GameObject("Divider", typeof(RectTransform), typeof(Image));
@@ -212,10 +212,10 @@ public class MainMenuController : MonoBehaviour
         MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterARMode()));
 
         // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -130f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterQAMode()));
+        MakeMenuButton(content.transform, btnQAText, 0, -130f * s, 180f * s, 40f * s, s, () => StartCoroutine(EnterQAMode()));
 
         // Button 3: Smart QA
-        MakeMenuButton(content.transform, btnSmartQAText, 0, -196f * s, 240f * s, 52f * s, s, () => StartCoroutine(EnterSmartQAMode()));
+        MakeMenuButton(content.transform, btnSmartQAText, 0, -196f * s, 180f * s, 40f * s, s, () => StartCoroutine(EnterSmartQAMode()));
 
         // Footer description at bottom of page
         MakeFooterDesc(menuDesc, s);
@@ -415,6 +415,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -91,7 +91,7 @@ public class SmartQAPageController : MonoBehaviour
         GameObject textObj = new GameObject("Text", typeof(RectTransform));
         textObj.transform.SetParent(inputBg.transform, false);
         Text inputText = textObj.AddComponent<Text>();
-        inputText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        inputText.font = Font.CreateDynamicFontFromOSFont("Arial");
         inputText.fontSize = 16;
         inputText.color = new Color(0.94f, 0.95f, 0.98f, 1f);
         inputText.alignment = TextAnchor.MiddleLeft;
@@ -107,7 +107,7 @@ public class SmartQAPageController : MonoBehaviour
         phObj.transform.SetParent(inputBg.transform, false);
         Text phText = phObj.AddComponent<Text>();
         phText.text = "Ask about buttons/indicators...";
-        phText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        phText.font = Font.CreateDynamicFontFromOSFont("Arial");
         phText.fontSize = 14;
         phText.color = new Color(0.40f, 0.45f, 0.60f, 0.5f);
         phText.alignment = TextAnchor.MiddleLeft;
@@ -132,7 +132,7 @@ public class SmartQAPageController : MonoBehaviour
         askLabel.transform.SetParent(askBtn.transform, false);
         Text askTxt = askLabel.AddComponent<Text>();
         askTxt.text = "Ask";
-        askTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        askTxt.font = Font.CreateDynamicFontFromOSFont("Arial");
         askTxt.fontSize = 13;
         askTxt.color = Color.white;
         askTxt.alignment = TextAnchor.MiddleCenter;
@@ -149,7 +149,7 @@ public class SmartQAPageController : MonoBehaviour
         answerPanel.GetComponent<Image>().color = new Color(0.04f, 0.07f, 0.15f, 0.8f);
 
         Text answerText = answerPanel.AddComponent<Text>();
-        answerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        answerText.font = Font.CreateDynamicFontFromOSFont("Arial");
         answerText.fontSize = 13;
         answerText.color = new Color(0.85f, 0.88f, 0.93f, 1f);
         answerText.alignment = TextAnchor.UpperLeft;
@@ -186,3 +186,4 @@ public class SmartQAPageController : MonoBehaviour
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.sizeDelta = Vector2.zero;
     }
 }
+
