@@ -68,19 +68,19 @@ public class ButtonQAPageController : MonoBehaviour
         // Top bar
         GameObject topBar = NewGO("TopBar", pagePanel.transform);
         topBar.AddComponent<Image>().color = new Color(0.03f, 0.06f, 0.14f, 0.93f);
-        SetRect(topBar, 1f, 1f, 0.5f, 1f, 0, 40f * s);
+        SRA(topBar, 1f, 1f, 0.5f, 1f, 0, 40f * s, 0, 40f * s);
 
         // Back button
         GameObject backBtn = NewGO("BackBtn", topBar.transform);
         backBtn.AddComponent<Image>().color = new Color(0.08f, 0.15f, 0.35f, 0.9f);
         backBtn.AddComponent<Button>().onClick.AddListener(() => OnBackToMenu?.Invoke());
-        SetRect(backBtn, 0, 0.5f, 0, 0.5f, 8f * s, 0, 38f * s, 28f * s);
+        SRA(backBtn, 0, 0.5f, 0, 0.5f, 8f * s, 0, 38f * s, 28f * s);
         GameObject bl = NewGO("Lbl", backBtn.transform);
         TextMeshProUGUI blt = bl.AddComponent<TextMeshProUGUI>();
         blt.text = "<"; blt.fontSize = 14f * s; blt.alignment = TextAlignmentOptions.Center;
         blt.color = new Color(0.75f, 0.80f, 0.95f, 1f);
         if (menuFont != null) blt.font = menuFont;
-        SetRect(bl, 0, 1, 0, 1);
+        SRF(bl, 0, 1, 0, 1);
 
         // Title
         GameObject title = NewGO("Title", topBar.transform);
@@ -88,7 +88,7 @@ public class ButtonQAPageController : MonoBehaviour
         tt.text = "Button Catalog"; tt.fontSize = 14f * s; tt.alignment = TextAlignmentOptions.Center;
         tt.color = new Color(0.35f, 0.70f, 1f, 1f); tt.fontStyle = FontStyles.Bold;
         if (menuFont != null) tt.font = menuFont;
-        SetRect(title, 0.5f, 0.5f, 0.5f, 0.5f, 0, -20f * s, 200f * s, 28f * s);
+        SRA(title, 0.5f, 0.5f, 0.5f, 0.5f, 0, -20f * s, 200f * s, 28f * s);
 
         // Status line
         GameObject statusObj = NewGO("Status", pagePanel.transform);
@@ -97,11 +97,11 @@ public class ButtonQAPageController : MonoBehaviour
         statusText.fontSize = 10f * s; statusText.color = new Color(0.4f, 0.45f, 0.55f, 1f);
         statusText.alignment = TextAlignmentOptions.Center;
         if (menuFont != null) statusText.font = menuFont;
-        SetRect(statusObj, 0.5f, 1f, 0.5f, 1f, 0, -48f * s, 320f * s, 22f * s);
+        SRA(statusObj, 0.5f, 1f, 0.5f, 1f, 0, -48f * s, 320f * s, 22f * s);
 
         // Button list - simple vertical layout, NO ScrollRect
         GameObject listContainer = NewGO("ListContainer", pagePanel.transform);
-        SetRect(listContainer, 0.5f, 0.5f, 0.5f, 0.5f, 0, -20f * s, 320f * s, buttons.Count * 52f * s + 10f * s);
+        SRA(listContainer, 0.5f, 0.5f, 0.5f, 0.5f, 0, -20f * s, 320f * s, buttons.Count * 52f * s + 10f * s);
 
         Color[] colors = {
             new Color(0.15f, 0.60f, 0.25f, 0.92f), new Color(0.18f, 0.45f, 0.70f, 0.92f),
@@ -120,7 +120,7 @@ public class ButtonQAPageController : MonoBehaviour
             GameObject card = NewGO("Card_" + i, listContainer.transform);
             card.AddComponent<Image>().color = i < colors.Length ? colors[i] : Color.gray;
             card.AddComponent<Button>().onClick.AddListener(() => ShowDetail(idx));
-            SetRect(card, 0.5f, 1f, 0.5f, 1f, 0, y, 300f * s, 46f * s);
+            SRA(card, 0.5f, 1f, 0.5f, 1f, 0, y, 300f * s, 46f * s);
 
             GameObject label = NewGO("Lbl", card.transform);
             TextMeshProUGUI lt = label.AddComponent<TextMeshProUGUI>();
@@ -128,26 +128,26 @@ public class ButtonQAPageController : MonoBehaviour
             lt.fontSize = 14f * s; lt.color = Color.white; lt.alignment = TextAlignmentOptions.Center;
             lt.fontStyle = FontStyles.Bold;
             if (menuFont != null) lt.font = menuFont;
-            SetRect(label, 0, 1, 0, 1);
+            SRF(label, 0, 1, 0, 1);
         }
 
         // Detail panel
         detailPanel = NewGO("DetailPanel", pagePanel.transform);
         detailPanel.AddComponent<Image>().color = new Color(0.03f, 0.06f, 0.16f, 0.97f);
         detailPanel.transform.SetAsLastSibling();
-        SetRect(detailPanel, 0.05f, 0.92f, 0.05f, 0.08f);
+        SRF(detailPanel, 0.05f, 0.92f, 0.05f, 0.08f);
 
         // Close button
         GameObject closeBtn = NewGO("CloseBtn", detailPanel.transform);
         closeBtn.AddComponent<Image>().color = new Color(0.3f, 0.1f, 0.1f, 0.9f);
         closeBtn.AddComponent<Button>().onClick.AddListener(() => detailPanel.SetActive(false));
-        SetRect(closeBtn, 1f, 1f, 1f, 1f, -42f * s, -12f * s, 32f * s, 32f * s);
+        SRA(closeBtn, 1f, 1f, 1f, 1f, -42f * s, -12f * s, 32f * s, 32f * s);
         GameObject cl = NewGO("Lbl", closeBtn.transform);
         TextMeshProUGUI clt = cl.AddComponent<TextMeshProUGUI>();
         clt.text = "X"; clt.fontSize = 16f * s; clt.alignment = TextAlignmentOptions.Center;
         clt.color = Color.white;
         if (menuFont != null) clt.font = menuFont;
-        SetRect(cl, 0, 1, 0, 1);
+        SRF(cl, 0, 1, 0, 1);
 
         // Detail text
         GameObject dtObj = NewGO("DetailText", detailPanel.transform);
@@ -155,7 +155,7 @@ public class ButtonQAPageController : MonoBehaviour
         detailText.fontSize = 13f * s; detailText.color = new Color(0.88f, 0.9f, 0.95f, 1f);
         detailText.alignment = TextAlignmentOptions.TopLeft;
         if (menuFont != null) detailText.font = menuFont;
-        SetRect(dtObj, 0, 1, 0, 1, 16f * s, 16f * s, -16f * s, -60f * s);
+        SRO(dtObj, 0, 1, 0, 1, 16f * s, 16f * s, -16f * s, -60f * s);
 
         detailPanel.SetActive(false);
         Debug.Log("[BtnQA] CreatePage DONE - " + buttons.Count + " buttons");
@@ -179,7 +179,8 @@ public class ButtonQAPageController : MonoBehaviour
         return go;
     }
 
-    void SetRect(GameObject go, float ax, float ay, float px, float py, float x, float y, float w, float h)
+    // Anchor + position + size (6 floats after GameObject)
+    void SRA(GameObject go, float ax, float ay, float px, float py, float x, float y, float w, float h)
     {
         RectTransform r = go.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(ax, ay); r.anchorMax = new Vector2(px, py);
@@ -188,14 +189,16 @@ public class ButtonQAPageController : MonoBehaviour
         r.sizeDelta = new Vector2(w, h);
     }
 
-    void SetRect(GameObject go, float ax, float ay, float px, float py)
+    // Anchor only, full-stretch (4 floats after GameObject)
+    void SRF(GameObject go, float ax, float ay, float px, float py)
     {
         RectTransform r = go.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(ax, ay); r.anchorMax = new Vector2(px, py);
         r.offsetMin = r.offsetMax = Vector2.zero;
     }
 
-    void SetRect(GameObject go, float ax, float ay, float px, float py, float l, float t, float r, float b)
+    // Anchor + offsets (8 floats after GameObject)
+    void SRO(GameObject go, float ax, float ay, float px, float py, float l, float t, float r, float b)
     {
         RectTransform rt = go.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(ax, ay); rt.anchorMax = new Vector2(px, py);
