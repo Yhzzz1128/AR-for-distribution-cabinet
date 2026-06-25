@@ -134,13 +134,13 @@ public class ButtonQAPageController : MonoBehaviour
         MakeBtn(detailPanel.transform, "X", -32f * s, -10f * s, 28f * s, 28f * s,
             new Color(0.3f, 0.1f, 0.1f, 0.9f), Color.white, 14f * s, () => detailPanel.SetActive(false));
 
-        // Detail text
-        var dt = detailPanel.AddComponent<TextMeshProUGUI>();
-        detailText = dt;
-        dt.fontSize = 12f * s; dt.color = new Color(0.88f, 0.9f, 0.95f, 1f);
-        dt.alignment = TextAlignmentOptions.TopLeft;
-        if (menuFont != null) dt.font = menuFont;
-        AnchorOff(dt.gameObject, 0, 1, 1, 0, 14f * s, 50f * s, 14f * s, 14f * s);
+        // Detail text on separate child GameObject
+        GameObject dtObj = MakeGO("DetailText", detailPanel.transform);
+        detailText = dtObj.AddComponent<TextMeshProUGUI>();
+        detailText.fontSize = 12f * s; detailText.color = new Color(0.88f, 0.9f, 0.95f, 1f);
+        detailText.alignment = TextAlignmentOptions.TopLeft;
+        if (menuFont != null) detailText.font = menuFont;
+        AnchorOff(dtObj, 0, 1, 1, 0, 14f * s, 50f * s, 14f * s, 14f * s);
 
         detailPanel.SetActive(false);
         Debug.Log("[BtnQA] Done - " + buttons.Count + " cards");
