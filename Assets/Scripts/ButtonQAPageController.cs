@@ -48,10 +48,15 @@ public class ButtonQAPageController : MonoBehaviour
 
     void CreatePage()
     {
+        try
+        {
+        Debug.Log("[ButtonQA] CreatePage started");
         float s = Mathf.Clamp(Screen.width / 540f, 1f, 2f);
 
         pagePanel = new GameObject("ButtonQAPage", typeof(RectTransform), typeof(Image));
+        if (pagePanel == null) { Debug.LogError("[ButtonQA] Failed to create pagePanel"); return; }
         pagePanel.transform.SetParent(canvas.transform, false);
+        Debug.Log("[ButtonQA] pagePanel created");
         pagePanel.transform.SetAsLastSibling();
         RectTransform pr = pagePanel.GetComponent<RectTransform>();
         pr.anchorMin = Vector2.zero; pr.anchorMax = Vector2.one; pr.offsetMin = pr.offsetMax = Vector2.zero;
@@ -125,7 +130,9 @@ public class ButtonQAPageController : MonoBehaviour
             if (cbr != null) { cbr.anchorMin = cbr.anchorMax = cbr.pivot = new Vector2(1, 1); }
         }
 
+        if (detailOverlay == null) { Debug.LogError("[ButtonQA] detailOverlay is null"); return; }
         detailText = detailOverlay.AddComponent<Text>();
+        if (detailText == null) { Debug.LogError("[ButtonQA] detailText AddComponent returned null"); return; }
         if (fallbackFont != null) detailText.font = fallbackFont;
         detailText.fontSize = 13; detailText.color = new Color(0.88f, 0.9f, 0.95f, 1f);
         detailText.alignment = TextAnchor.UpperLeft;
@@ -171,6 +178,12 @@ public class ButtonQAPageController : MonoBehaviour
             nameTxt.horizontalOverflow = HorizontalWrapMode.Overflow;
             RectTransform nr = nameObj.GetComponent<RectTransform>();
             nr.anchorMin = Vector2.zero; nr.anchorMax = Vector2.one; nr.offsetMin = nr.offsetMax = Vector2.zero;
+        }
+        Debug.Log("[ButtonQA] CreatePage completed successfully");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("[ButtonQA] CreatePage exception: " + ex.Message + "\n" + ex.StackTrace);
         }
     }
 
