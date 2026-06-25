@@ -219,13 +219,13 @@ public class MainMenuController : MonoBehaviour
         div.GetComponent<Image>().color = new Color(0.15f, 0.30f, 0.50f, 0.6f);
 
         // Button 1: AR Inspection
-        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, () => { Debug.Log("[MainMenu] AR Inspection clicked"); StartCoroutine(EnterARMode()); });
+        MakeMenuButton(content.transform, btnARText, 0, -64f * s, 240f * s, 52f * s, s, OnARClicked);
 
         // Button 2: Knowledge Base
-        MakeMenuButton(content.transform, btnQAText, 0, -182f * s, 200f * s, 42f * s, s, () => { Debug.Log("[MainMenu] Knowledge Base clicked"); StartCoroutine(EnterQAMode()); });
+        MakeMenuButton(content.transform, btnQAText, 0, -182f * s, 200f * s, 42f * s, s, OnQAClicked);
 
         // Button 3: Smart QA
-        MakeMenuButton(content.transform, btnButtonQAText, 0, -234f * s, 200f * s, 42f * s, s, () => { Debug.Log("[MainMenu] Button QA clicked"); StartCoroutine(EnterButtonQAMode()); });
+        MakeMenuButton(content.transform, btnButtonQAText, 0, -234f * s, 200f * s, 42f * s, s, OnButtonQAClicked);
 
         // Footer description at bottom of page
         MakeFooterDesc(menuDesc, s);
@@ -328,6 +328,10 @@ public class MainMenuController : MonoBehaviour
         if (cg == null) cg = menuPanel.AddComponent<CanvasGroup>();
         StartCoroutine(FadeInPanel(menuPanel, cg));
     }
+
+    void OnARClicked()      { Debug.Log("[MainMenu] AR Inspection clicked"); StartCoroutine(EnterARMode()); }
+    void OnQAClicked()      { Debug.Log("[MainMenu] Knowledge Base clicked"); StartCoroutine(EnterQAMode()); }
+    void OnButtonQAClicked(){ Debug.Log("[MainMenu] Button QA clicked"); StartCoroutine(EnterButtonQAMode()); }
 
     public void ReturnToMenu()
     {
