@@ -580,16 +580,22 @@ public class AI_Search_Manager : MonoBehaviour
         TextAsset gkJson = Resources.Load<TextAsset>("PDG_Knowledge");
         if (gkJson != null)
         {
-            GeneralKBWrapper gkWrapper = JsonUtility.FromJson<GeneralKBWrapper>("{\"items\":" + gkJson.text + "}");
+            Debug.Log("[AISearch] PDG_Knowledge.json loaded, length=" + gkJson.text.Length);
+            string gkWrapped = "{\"items\":" + gkJson.text + "}";
+            GeneralKBWrapper gkWrapper = JsonUtility.FromJson<GeneralKBWrapper>(gkWrapped);
             if (gkWrapper != null && gkWrapper.items != null)
             {
+                Debug.Log("[AISearch] PDG deserialized: " + gkWrapper.items.Length + " items");
                 foreach (var gk in gkWrapper.items)
                 {
-                    generalKnowledge.Add(new OperationEntry { command = gk.title, title = gk.title, keywords = gk.keywords, steps = string.IsNullOrWhiteSpace(gk.content) ? new string[0] : new string[] { gk.content } });
+                    if (gk == null) continue;
+                    generalKnowledge.Add(new OperationEntry { command = gk.title ?? "", title = gk.title ?? "", keywords = gk.keywords ?? new string[0], steps = string.IsNullOrWhiteSpace(gk.content) ? new string[0] : new string[] { gk.content } });
                 }
-                Debug.Log($"通用知识库加载成功，共 {generalKnowledge.Count} 条。");
+                Debug.Log("[AISearch] General KB loaded: " + generalKnowledge.Count + " entries");
             }
+            else { Debug.LogWarning("[AISearch] PDG deserialization returned null"); }
         }
+        else { Debug.LogWarning("[AISearch] PDG_Knowledge.json not found in Resources"); }
         }
         catch (Exception e)
         {
@@ -1493,9 +1499,9 @@ public class AI_Search_Manager : MonoBehaviour
     }
 
     [Serializable]
-    private class GeneralKBEntry { public string title; public string category; public string[] keywords; public string content; }
+    public class GeneralKBEntry { public string title; public string category; public string[] keywords; public string content; }
     [Serializable]
-    private class GeneralKBWrapper { public GeneralKBEntry[] items; }
+    public class GeneralKBWrapper { public GeneralKBEntry[] items; }
     [Serializable]
     public class OperationEntry
     {
